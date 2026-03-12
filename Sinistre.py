@@ -1,0 +1,64 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from Base import Base
+    from MembreEquipage import MembreEquipage
+    from Module import Module
+
+
+class Sinistre:
+    _idSinistre: int
+    _dateCreation: str
+    _idMembreAuteur: int
+    _ptDeVieResultant: int
+    _etat: int          # 0 = en cours, 1 = réparé
+    _dateReparation: str
+    _monSystem: "Base"
+    _monMembreAuteur: "MembreEquipage"
+    _monTechnicien: "MembreEquipage"
+    _monModule: "Module"
+
+    def __init__(self, idSinistre: int, dateCreation: str, idMembreAuteur: int, ptDeVieResultant: int, s: "Base"):
+        self._idSinistre = idSinistre
+        self._dateCreation = dateCreation
+        self._idMembreAuteur = idMembreAuteur
+        self._ptDeVieResultant = ptDeVieResultant
+        self._etat = 0
+        self._dateReparation = None
+        self._monSystem = s
+        self._monMembreAuteur = None
+        self._monTechnicien = None
+        self._monModule = None
+
+    def getId(self) -> int:
+        return self._idSinistre
+
+    def getPtDeVieResultant(self) -> int:
+        return self._ptDeVieResultant
+
+    def getEtat(self) -> int:
+        return self._etat
+
+    def setEtat(self, etat: int) -> bool:
+        self._etat = etat
+        return True
+
+    def setDateReparation(self, dateReparation: str) -> bool:
+        self._dateReparation = dateReparation
+        return True
+
+    def lierMembreEquipage(self, membre: "MembreEquipage") -> bool:
+        self._monMembreAuteur = membre
+        return True
+
+    def lierTechnicien(self, technicien: "MembreEquipage") -> bool:
+        self._monTechnicien = technicien
+        return True
+
+    def lierModule(self, module: "Module") -> bool:
+        self._monModule = module
+        return True
+
+    def donnee(self):
+        return (self._idSinistre, self._dateCreation, self._idMembreAuteur,
+                self._ptDeVieResultant, self._etat)

@@ -1,0 +1,44 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from Base import Base
+    from Sinistre import Sinistre
+
+
+class Module:
+    _idModule: int
+    _etat: int          # 1 = actif, 0 = supprimé/masqué
+    _monSystem: "Base"
+    _mesSinistres: list["Sinistre"]
+
+    def __init__(self, idModule: int, s: "Base"):
+        self._idModule = idModule
+        self._etat = 1
+        self._monSystem = s
+        self._mesSinistres = []
+
+    def getId(self) -> int:
+        return self._idModule
+
+    def getEtat(self) -> int:
+        return self._etat
+
+    def setEtat(self, etat: int) -> bool:
+        self._etat = etat
+        return True
+
+    def verifSinistreEnCours(self) -> bool:
+        for s in self._mesSinistres:
+            if s.getEtat() == 0:
+                return True
+        return False
+
+    def getSinistreEnCours(self) -> "Sinistre":
+        for s in self._mesSinistres:
+            if s.getEtat() == 0:
+                return s
+        return None
+
+    def lierSinistre(self, sinistre: "Sinistre") -> bool:
+        self._mesSinistres.append(sinistre)
+        return True
