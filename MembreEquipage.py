@@ -1,4 +1,5 @@
 from __future__ import annotations
+import datetime
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from Base import Base
@@ -45,6 +46,12 @@ class MembreEquipage:
     def estEnExpedition(self) -> bool:
         for e in self._mesExpeditionsParticipees:
             if e.getEtat() == 1:
+                return True
+        return False
+
+    def estEnExpeditionSurIntervalle(self, dateLancement: datetime.date, dateRetour: datetime.date) -> bool:
+        for e in self._mesExpeditionsParticipees:
+            if e.getEtat() == 1 and e.getDateLancement() < dateRetour and dateLancement < e.getDateRetour():
                 return True
         return False
 

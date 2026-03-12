@@ -1,4 +1,5 @@
 from __future__ import annotations
+import datetime
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -77,6 +78,15 @@ class Base:
             if (m.getId() == idChercheur and m.getEtatMembreEquipage() == 1
                     and m.getRoleMembre() == ROLE_CHERCHEUR
                     and not m.estEnExpedition()):
+                return True
+        return False
+
+    def estIdParticipantValide(self, idParticipant: int,
+                               dateLancement: datetime.date, dateRetour: datetime.date) -> bool:
+        for m in self._mesMembres:
+            if (m.getId() == idParticipant and m.getEtatMembreEquipage() == 1
+                    and m.getRoleMembre() == ROLE_CHERCHEUR
+                    and not m.estEnExpeditionSurIntervalle(dateLancement, dateRetour)):
                 return True
         return False
 
@@ -266,14 +276,18 @@ class Base:
     # =========================================================================
     def lancerExpedition(self, idChercheurLancement: int, idParticipant1: int,
                          idParticipant2: int, idExpedition: int,
-                         idGarage: int, dateLancement: str) -> bool:
+                         idGarage: int, dateLancement: datetime.date,
+                         dateRetour: datetime.date) -> bool:
         """
         Valide les ids puis délègue la création au Garage.
         Le chercheur lanceur ne participe PAS à l'expédition.
         """
+        if dateRetour <= dateLancement:
+            return False
+
         reponseIdChercheurValide = self.estIdChercheurValide(idChercheurLancement)
-        reponseIdParticipant1Valide = self.estIdChercheurValide(idParticipant1)
-        reponseIdParticipant2Valide = self.estIdChercheurValide(idParticipant2)
+        reponseIdParticipant1Valide = self.estIdParticipantValide(idParticipant1, dateLancement, dateRetour)
+        reponseIdParticipant2Valide = self.estIdParticipantValide(idParticipant2, dateLancement, dateRetour)
         reponseIdExpeditionValide = self.estIdExpeditionValide(idExpedition)
         reponseIdGarageValide = self.estIdGarageValide(idGarage)
 
@@ -292,7 +306,7 @@ class Base:
 
         # Délégation au Garage (point 5)
         garage.creerExpedition(idChercheurLancement, idParticipant1,
-                               idParticipant2, idExpedition, dateLancement)
+                               idParticipant2, idExpedition, dateLancement, dateRetour)
 
         return True
 
@@ -318,7 +332,7 @@ class Base:
     # UC8 — Réceptionner une Expédition
     # =========================================================================
     def receptionnerExpedition(self, idChercheurRetour: int, idExpedition: int,
-                                nbPieceModule: int, dateRetour: str, ptDeVieResultant: int) -> bool:
+                                nbPieceModule: int, ptDeVieResultant: int) -> bool:
         reponseIdChercheurValide = self.estIdChercheurValide(idChercheurRetour)
         reponseIdExpeditionValide = self.estIdExpeditionValide(idExpedition)
 
@@ -330,7 +344,7 @@ class Base:
             return False
 
         # Point 6 : on passe idExpedition pour vérifier la bonne expédition
-        if not garage.receptionnerExpedition(idExpedition, dateRetour, ptDeVieResultant):
+        if not garage.receptionnerExpedition(idExpedition, ptDeVieResultant):
             return False
 
         self._nbPieceModuleStock += nbPieceModule

@@ -1,4 +1,5 @@
 from __future__ import annotations
+import datetime
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from Base import Base
@@ -9,8 +10,8 @@ if TYPE_CHECKING:
 class Expedition:
     _idExpedition: int
     _idChercheurLancement: int
-    _dateLancement: str
-    _dateRetour: str
+    _dateLancement: datetime.date
+    _dateRetour: datetime.date
     _ptDeVieResultant: int
     _etat: int          # 1 = en cours, 0 = terminée
     _monSystem: "Base"
@@ -20,11 +21,14 @@ class Expedition:
     _monParticipant2: "MembreEquipage"
     _monGarage: "Garage"
 
-    def __init__(self, idExpedition: int, idChercheurLancement: int, dateLancement: str, s: "Base"):
+    def __init__(self, idExpedition: int, idChercheurLancement: int,
+                 dateLancement: datetime.date, dateRetour: datetime.date, s: "Base"):
+        if dateRetour <= dateLancement:
+            raise ValueError("dateRetour doit être postérieure à dateLancement")
         self._idExpedition = idExpedition
         self._idChercheurLancement = idChercheurLancement
         self._dateLancement = dateLancement
-        self._dateRetour = None
+        self._dateRetour = dateRetour
         self._ptDeVieResultant = None
         self._etat = 1
         self._monSystem = s
@@ -37,15 +41,17 @@ class Expedition:
     def getId(self) -> int:
         return self._idExpedition
 
+    def getDateLancement(self) -> datetime.date:
+        return self._dateLancement
+
+    def getDateRetour(self) -> datetime.date:
+        return self._dateRetour
+
     def getEtat(self) -> int:
         return self._etat
 
     def setEtat(self, etat: int) -> bool:
         self._etat = etat
-        return True
-
-    def setDateRetour(self, dateRetour: str) -> bool:
-        self._dateRetour = dateRetour
         return True
 
     def setPtDeVie(self, ptDeVieResultant: int) -> bool:

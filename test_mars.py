@@ -1,4 +1,5 @@
 import pytest
+import datetime
 from Base import Base
 
 
@@ -162,13 +163,16 @@ def test_uc12_reparer_serre(base):
 
 def test_uc6_lancer_expedition(base):
     # lanceur=3, participants=4 et 5, garage=10
-    assert base.lancerExpedition(3, 4, 5, 400, 10, "2025-03-01") is True
+    assert base.lancerExpedition(3, 4, 5, 400, 10,
+                                 datetime.date(2025, 3, 1), datetime.date(2025, 3, 10)) is True
 
 def test_uc6_lancer_expedition_participants_en_expedition(base):
-    assert base.lancerExpedition(3, 4, 5, 401, 10, "2025-03-02") is False  # 4 et 5 déjà en expédition
+    assert base.lancerExpedition(3, 4, 5, 401, 10,
+                                 datetime.date(2025, 3, 2), datetime.date(2025, 3, 11)) is False  # 4 et 5 déjà en expédition
 
 def test_uc6_lancer_expedition_ids_non_distincts(base):
-    assert base.lancerExpedition(3, 4, 4, 401, 10, "2025-03-02") is False  # ids non distincts
+    assert base.lancerExpedition(3, 4, 4, 401, 10,
+                                 datetime.date(2025, 3, 2), datetime.date(2025, 3, 11)) is False  # ids non distincts
 
 
 # ---------------------------------------------------------------------------
@@ -177,11 +181,11 @@ def test_uc6_lancer_expedition_ids_non_distincts(base):
 
 def test_uc8_receptionner_expedition(base):
     # chercheur 3 est le lanceur (libre), peut réceptionner
-    assert base.receptionnerExpedition(3, 400, 5, "2025-03-10", 80) is True
+    assert base.receptionnerExpedition(3, 400, 5, 80) is True
 
 def test_uc8_receptionner_expedition_deja_receptionnee(base):
     # chercheur 4 est participant (en expédition) — invalide
-    assert base.receptionnerExpedition(4, 400, 5, "2025-03-10", 80) is False
+    assert base.receptionnerExpedition(4, 400, 5, 80) is False
 
 
 # ---------------------------------------------------------------------------

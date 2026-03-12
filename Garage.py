@@ -1,4 +1,5 @@
 from __future__ import annotations
+import datetime
 from typing import TYPE_CHECKING
 from Module import Module
 if TYPE_CHECKING:
@@ -20,7 +21,7 @@ class Garage(Module):
 
     def creerExpedition(self, idChercheurLancement: int, idParticipant1: int,
                         idParticipant2: int, idExpedition: int,
-                        dateLancement: str) -> "Expedition":
+                        dateLancement: datetime.date, dateRetour: datetime.date) -> "Expedition":
         """
         Crée une Expedition, lie le garage, le chercheur lanceur et les 2 participants.
         Le chercheur lanceur ne participe PAS à l'expédition.
@@ -28,7 +29,7 @@ class Garage(Module):
         """
         from Expedition import Expedition
 
-        nouvelleExpedition = Expedition(idExpedition, idChercheurLancement, dateLancement, self._monSystem)
+        nouvelleExpedition = Expedition(idExpedition, idChercheurLancement, dateLancement, dateRetour, self._monSystem)
 
         chercheur = self._monSystem.trouverMembreEquipage(idChercheurLancement)
         participant1 = self._monSystem.trouverMembreEquipage(idParticipant1)
@@ -69,7 +70,7 @@ class Garage(Module):
                 return e
         return None
 
-    def receptionnerExpedition(self, idExpedition: int, dateRetour: str, ptDeVieResultant: int) -> bool:
+    def receptionnerExpedition(self, idExpedition: int, ptDeVieResultant: int) -> bool:
         """
         Réceptionne l'expédition identifiée par idExpedition.
         Vérifie que l'expédition existe et est en cours (etat == 1).
@@ -78,7 +79,6 @@ class Garage(Module):
         if expedition is None or expedition.getEtat() != 1:
             return False
         expedition.setEtat(0)
-        expedition.setDateRetour(dateRetour)
         expedition.setPtDeVie(ptDeVieResultant)
         return True
 
