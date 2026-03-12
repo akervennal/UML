@@ -68,10 +68,10 @@ def test_uc9_receptionner_commande(base):
 
 def test_uc9_stocks_apres_commande(base):
     stocks = base.donneeStocks()
-    # graines: 100 - 20 (garage) - 15 (serre) + 50 = 115
+    # graines: 100 + 50 = 150  (modules ne déduisent pas les graines)
     # nourriture: 50 + 20 = 70
     # piecesModule: 200 - 20 - 15 + 30 = 195
-    assert stocks["graines"] == 115
+    assert stocks["graines"] == 150
     assert stocks["nourriture"] == 70
     assert stocks["piecesModule"] == 195
 
