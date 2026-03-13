@@ -249,7 +249,7 @@ class Base:
         if garage.verifExpeditionEnCours():
             return False
 
-        garage.creerExpedition(idChercheurLancement, idParticipant,
+        garage.lancerExpedition(idChercheurLancement, idParticipant,
                                idExpedition, dateLancement)
 
         return True

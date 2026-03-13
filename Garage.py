@@ -18,7 +18,7 @@ class Garage(Module):
         self._mesExpeditions.append(expedition)
         return True
 
-    def creerExpedition(self, idChercheurLancement: int, idParticipant: int,
+    def lancerExpedition(self, idChercheurLancement: int, idParticipant: int,
                         idExpedition: int,
                         dateLancement: str) -> "Expedition":
         """
