@@ -161,14 +161,14 @@ def test_uc12_reparer_serre(base):
 # ---------------------------------------------------------------------------
 
 def test_uc6_lancer_expedition(base):
-    # lanceur=3, participants=4 et 5, garage=10
-    assert base.lancerExpedition(3, 4, 5, 400, 10, "2025-03-01") is True
+    # lanceur=3, participant=4, garage=10
+    assert base.lancerExpedition(3, 4, 400, 10, "2025-03-01") is True
 
-def test_uc6_lancer_expedition_participants_en_expedition(base):
-    assert base.lancerExpedition(3, 4, 5, 401, 10, "2025-03-02") is False  # 4 et 5 déjà en expédition
+def test_uc6_lancer_expedition_participant_en_expedition(base):
+    assert base.lancerExpedition(3, 4, 401, 10, "2025-03-02") is False  # 4 déjà en expédition
 
 def test_uc6_lancer_expedition_ids_non_distincts(base):
-    assert base.lancerExpedition(3, 4, 4, 401, 10, "2025-03-02") is False  # ids non distincts
+    assert base.lancerExpedition(3, 3, 401, 10, "2025-03-02") is False  # lanceur == participant
 
 
 # ---------------------------------------------------------------------------
@@ -180,8 +180,8 @@ def test_uc8_receptionner_expedition(base):
     assert base.receptionnerExpedition(3, 400, 5, "2025-03-10", 80) is True
 
 def test_uc8_receptionner_expedition_deja_receptionnee(base):
-    # chercheur 4 est participant (en expédition) — invalide
-    assert base.receptionnerExpedition(4, 400, 5, "2025-03-10", 80) is False
+    # expédition 400 déjà réceptionnée (etat=0) — invalide
+    assert base.receptionnerExpedition(3, 400, 5, "2025-03-10", 80) is False
 
 
 # ---------------------------------------------------------------------------

@@ -230,29 +230,27 @@ class Base:
 
         return True
 
-    def lancerExpedition(self, idChercheurLancement: int, idParticipant1: int,
-                         idParticipant2: int, idExpedition: int,
+    def lancerExpedition(self, idChercheurLancement: int, idParticipant: int,
+                         idExpedition: int,
                          idGarage: int, dateLancement: str) -> bool:
         reponseIdChercheurValide = self.estIdChercheurValide(idChercheurLancement)
-        reponseIdParticipant1Valide = self.estIdChercheurValide(idParticipant1)
-        reponseIdParticipant2Valide = self.estIdChercheurValide(idParticipant2)
+        reponseIdParticipantValide = self.estIdChercheurValide(idParticipant)
         reponseIdExpeditionValide = self.estIdExpeditionValide(idExpedition)
         reponseIdGarageValide = self.estIdGarageValide(idGarage)
 
-        if (not reponseIdChercheurValide or not reponseIdParticipant1Valide
-                or not reponseIdParticipant2Valide
+        if (not reponseIdChercheurValide or not reponseIdParticipantValide
                 or reponseIdExpeditionValide or not reponseIdGarageValide):
             return False
 
-        if len({idChercheurLancement, idParticipant1, idParticipant2}) != 3:
+        if idChercheurLancement == idParticipant:
             return False
 
         garage = self.trouverGarage(idGarage)
         if garage.verifExpeditionEnCours():
             return False
 
-        garage.creerExpedition(idChercheurLancement, idParticipant1,
-                               idParticipant2, idExpedition, dateLancement)
+        garage.creerExpedition(idChercheurLancement, idParticipant,
+                               idExpedition, dateLancement)
 
         return True
 

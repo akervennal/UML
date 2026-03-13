@@ -8,7 +8,6 @@ if TYPE_CHECKING:
 
 class Expedition:
     _idExpedition: int
-    _idChercheurLancement: int
     _dateLancement: str
     _dateRetour: str
     _ptDeVieResultant: int
@@ -16,13 +15,11 @@ class Expedition:
     _monSystem: "Base"
     _monChercheurLancement: "MembreEquipage"
     _monChercheurRetour: "MembreEquipage"
-    _monParticipant1: "MembreEquipage"
-    _monParticipant2: "MembreEquipage"
+    _monParticipant: "MembreEquipage"
     _monGarage: "Garage"
 
-    def __init__(self, idExpedition: int, idChercheurLancement: int, dateLancement: str, s: "Base"):
+    def __init__(self, idExpedition: int, dateLancement: str, s: "Base"):
         self._idExpedition = idExpedition
-        self._idChercheurLancement = idChercheurLancement
         self._dateLancement = dateLancement
         self._dateRetour = None
         self._ptDeVieResultant = None
@@ -30,8 +27,7 @@ class Expedition:
         self._monSystem = s
         self._monChercheurLancement = None
         self._monChercheurRetour = None
-        self._monParticipant1 = None
-        self._monParticipant2 = None
+        self._monParticipant = None
         self._monGarage = None
 
     def getId(self) -> int:
@@ -64,14 +60,10 @@ class Expedition:
         self._monChercheurRetour = membre
         return True
 
-    def lierParticipant1(self, membre: "MembreEquipage") -> bool:
-        self._monParticipant1 = membre
-        return True
-
-    def lierParticipant2(self, membre: "MembreEquipage") -> bool:
-        self._monParticipant2 = membre
+    def lierParticipant(self, membre: "MembreEquipage") -> bool:
+        self._monParticipant = membre
         return True
 
     def donnee(self):
-        return (self._idExpedition, self._idChercheurLancement,
+        return (self._idExpedition, self._monChercheurLancement.getId(),
                 self._dateLancement, self._etat)

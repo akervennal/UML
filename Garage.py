@@ -18,32 +18,28 @@ class Garage(Module):
         self._mesExpeditions.append(expedition)
         return True
 
-    def creerExpedition(self, idChercheurLancement: int, idParticipant1: int,
-                        idParticipant2: int, idExpedition: int,
+    def creerExpedition(self, idChercheurLancement: int, idParticipant: int,
+                        idExpedition: int,
                         dateLancement: str) -> "Expedition":
         """
-        Crée une Expedition, lie le garage, le chercheur lanceur et les 2 participants.
+        Crée une Expedition, lie le garage, le chercheur lanceur et le participant.
         Le chercheur lanceur ne participe PAS à l'expédition.
         Retourne l'Expedition créée.
         """
         from Expedition import Expedition
 
-        nouvelleExpedition = Expedition(idExpedition, idChercheurLancement, dateLancement, self._monSystem)
+        nouvelleExpedition = Expedition(idExpedition, dateLancement, self._monSystem)
 
         chercheur = self._monSystem.trouverMembreEquipage(idChercheurLancement)
-        participant1 = self._monSystem.trouverMembreEquipage(idParticipant1)
-        participant2 = self._monSystem.trouverMembreEquipage(idParticipant2)
+        participant = self._monSystem.trouverMembreEquipage(idParticipant)
 
         # Liaison chercheur lancement (lance mais ne participe PAS)
         nouvelleExpedition.lierChercheurLancement(chercheur)
         chercheur.lierExpeditionLancee(nouvelleExpedition)
 
-        # Liaisons participants
-        nouvelleExpedition.lierParticipant1(participant1)
-        participant1.lierExpeditionParticipee(nouvelleExpedition)
-
-        nouvelleExpedition.lierParticipant2(participant2)
-        participant2.lierExpeditionParticipee(nouvelleExpedition)
+        # Liaison participant
+        nouvelleExpedition.lierParticipant(participant)
+        participant.lierExpeditionParticipee(nouvelleExpedition)
 
         # Liaison garage
         nouvelleExpedition.lierGarage(self)
