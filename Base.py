@@ -105,9 +105,9 @@ class Base:
 
     def estIdEvenementSerreValide(self, idEvenement: int) -> "EvenementSerre | None":
         for s in self._mesSerres:
-            for e in s._mesEvenements:
-                if e.getId() == idEvenement:
-                    return e
+            e = s.estIdEvenementValide(idEvenement)
+            if e:
+                return e
         return None
 
     def ajouterMembre(self, idCmdt: int, idMembre: int, role: str) -> bool:
@@ -190,7 +190,7 @@ class Base:
         expedition = self.estIdExpeditionValide(idExpedition)
         if not chercheur or not expedition:
             return False
-        if not expedition._monGarage.receptionnerExpedition(expedition, dateRetour, ptDeVieResultant):
+        if not expedition.getGarage().receptionnerExpedition(expedition, dateRetour, ptDeVieResultant):
             return False
         self._nbPieceModuleStock += nbPieceModule
         expedition.lierChercheurRetour(chercheur)

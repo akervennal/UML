@@ -14,14 +14,14 @@ class EvenementSerre:
     _maSerre: "Serre"
 
     def __init__(self, idEvenementSerre: int, nbGraine: int,
-                 biologiste: "MembreEquipage", serre: "Serre", s: "Base"):
+                 biologiste: "MembreEquipage", serre: "Serre", base: "Base"):
         self._idEvenementSerre = idEvenementSerre
         self._nbGraine = nbGraine
-        self._monSystem = s
+        self._monSystem = base
         self._monBiologiste = biologiste
         self._maSerre = serre
         biologiste.lierEvenementSerre(self)
-        serre._mesEvenements.append(self)
+        serre.lierEvenementSerre(self)
 
     def getId(self) -> int:
         return self._idEvenementSerre

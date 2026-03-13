@@ -18,13 +18,13 @@ class Sinistre:
     _monModule: "Module"
 
     def __init__(self, idSinistre: int, dateCreation: str, ptDeVieResultant: int,
-                 membre: "MembreEquipage", module: "Module", s: "Base"):
+                 membre: "MembreEquipage", module: "Module", base: "Base"):
         self._idSinistre = idSinistre
         self._dateCreation = dateCreation
         self._ptDeVieResultant = ptDeVieResultant
         self._etat = 0
         self._dateReparation = None
-        self._monSystem = s
+        self._monSystem = base
         self._monMembreAuteur = membre
         self._monTechnicien = None
         self._monModule = module

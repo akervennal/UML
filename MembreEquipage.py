@@ -18,11 +18,11 @@ class MembreEquipage:
     _mesExpeditionsReceptionnees: list["Expedition"]
     _mesEvenementsSerre: list["EvenementSerre"]
 
-    def __init__(self, idMembre: int, roleMembre: str, s: "Base"):
+    def __init__(self, idMembre: int, roleMembre: str, base: "Base"):
         self._idMembre = idMembre
         self._roleMembre = roleMembre
         self._etat = 1
-        self._monSystem = s
+        self._monSystem = base
         self._mesSinistres = []
         self._mesExpeditionsLancees = []
         self._mesExpeditionsParticipees = []

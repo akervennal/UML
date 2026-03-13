@@ -20,20 +20,20 @@ class Expedition:
 
     def __init__(self, idExpedition: int, dateLancement: str,
                  chercheurLancement: "MembreEquipage", participant: "MembreEquipage",
-                 garage: "Garage", s: "Base"):
+                 garage: "Garage", base: "Base"):
         self._idExpedition = idExpedition
         self._dateLancement = dateLancement
         self._dateRetour = None
         self._ptDeVieResultant = None
         self._etat = 1
-        self._monSystem = s
+        self._monSystem = base
         self._monChercheurLancement = chercheurLancement
         self._monChercheurRetour = None
         self._monParticipant = participant
         self._monGarage = garage
         chercheurLancement.lierExpeditionLancee(self)
         participant.lierExpeditionParticipee(self)
-        garage._mesExpeditions.append(self)
+        garage.lierExpedition(self)
 
     def getId(self) -> int:
         return self._idExpedition
@@ -52,6 +52,9 @@ class Expedition:
     def setPtDeVie(self, ptDeVieResultant: int) -> bool:
         self._ptDeVieResultant = ptDeVieResultant
         return True
+
+    def getGarage(self) -> "Garage":
+        return self._monGarage
 
     def lierChercheurRetour(self, membre: "MembreEquipage") -> bool:
         self._monChercheurRetour = membre

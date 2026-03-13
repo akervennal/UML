@@ -12,8 +12,8 @@ class Serre(Module):
     _nbPlantSerre: int
     _mesEvenements: list["EvenementSerre"]
 
-    def __init__(self, idSerre: int, s: "Base"):
-        super().__init__(idSerre, s)
+    def __init__(self, idSerre: int, base: "Base"):
+        super().__init__(idSerre, base)
         self._nbPlantSerre = 0
         self._mesEvenements = []
 
@@ -27,6 +27,16 @@ class Serre(Module):
     def creerEvenementSerre(self, biologiste: "MembreEquipage", idEvenementSerre: int, nbGraine: int) -> None:
         from EvenementSerre import EvenementSerre
         EvenementSerre(idEvenementSerre, nbGraine, biologiste, self, self._monSystem)
+
+    def lierEvenementSerre(self, evenement: "EvenementSerre") -> bool:
+        self._mesEvenements.append(evenement)
+        return True
+
+    def estIdEvenementValide(self, idEvenement: int) -> "EvenementSerre | None":
+        for e in self._mesEvenements:
+            if e.getId() == idEvenement:
+                return e
+        return None
 
     def donnee(self):
         return (self._idModule, self._nbPlantSerre, self._etat)

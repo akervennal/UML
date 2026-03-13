@@ -10,8 +10,8 @@ if TYPE_CHECKING:
 class Garage(Module):
     _mesExpeditions: list["Expedition"]
 
-    def __init__(self, idGarage: int, s: "Base"):
-        super().__init__(idGarage, s)
+    def __init__(self, idGarage: int, base: "Base"):
+        super().__init__(idGarage, base)
         self._mesExpeditions = []
 
     def verifExpeditionEnCours(self) -> bool:
@@ -39,6 +39,10 @@ class Garage(Module):
             if e.getEtat() == 1:
                 return e
         return None
+
+    def lierExpedition(self, expedition: "Expedition") -> bool:
+        self._mesExpeditions.append(expedition)
+        return True
 
     def donnee(self):
         return (self._idModule, self._etat)

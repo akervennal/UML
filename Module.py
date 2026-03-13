@@ -11,10 +11,10 @@ class Module:
     _monSystem: "Base"
     _mesSinistres: list["Sinistre"]
 
-    def __init__(self, idModule: int, s: "Base"):
+    def __init__(self, idModule: int, base: "Base"):
         self._idModule = idModule
         self._etat = 1
-        self._monSystem = s
+        self._monSystem = base
         self._mesSinistres = []
 
     def getId(self) -> int:
