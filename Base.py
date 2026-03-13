@@ -7,13 +7,11 @@ if TYPE_CHECKING:
     from Serre import Serre
     from Sinistre import Sinistre
 
-# Constantes de recyclage
 RECYCLAGE = 10
 RECYCLAGE_MODULE = 5
 PV_MAX_GARAGE = 100
 PV_MAX_SERRE = 100
 
-# Rôles valides
 ROLES_VALIDES = {"Commandant", "Technicien", "Biologiste", "Chercheur"}
 ROLE_COMMANDANT = "Commandant"
 ROLE_TECHNICIEN = "Technicien"
@@ -22,12 +20,10 @@ ROLE_CHERCHEUR  = "Chercheur"
 
 
 class Base:
-    # Stocks
     _nbGraineStock: int
     _nbNourritureStock: int
     _nbPieceModuleStock: int
 
-    # Collections
     _mesMembres: list["MembreEquipage"]
     _mesGarages: list["Garage"]
     _mesSerres: list["Serre"]
@@ -43,10 +39,6 @@ class Base:
         self._mesSinistres = []
         from MembreEquipage import MembreEquipage
         self._mesMembres.append(MembreEquipage(idCmdt, ROLE_COMMANDANT, self))
-
-    # -------------------------------------------------------------------------
-    # Méthodes de vérification d'existence (appelées en interne)
-    # -------------------------------------------------------------------------
 
     def estIdMembreValide(self, idMembre: int) -> bool:
         for m in self._mesMembres:
@@ -107,20 +99,12 @@ class Base:
                 return True
         return False
 
-    # -------------------------------------------------------------------------
-    # Méthodes utilitaires internes
-    # -------------------------------------------------------------------------
-
     def estIdEvenementSerreValide(self, idEvenement: int) -> bool:
         for s in self._mesSerres:
             for e in s._mesEvenements:
                 if e.getId() == idEvenement:
                     return True
         return False
-
-    # -------------------------------------------------------------------------
-    # Méthodes de recherche (trouver)
-    # -------------------------------------------------------------------------
 
     def trouverMembreEquipage(self, idMembre: int) -> "MembreEquipage":
         for m in self._mesMembres:
@@ -147,9 +131,6 @@ class Base:
                 return expedition
         return None
 
-    # =========================================================================
-    # UC1 — Ajouter un Membre d'équipage
-    # =========================================================================
     def ajouterMembre(self, idCmdt: int, idMembre: int, role: str) -> bool:
         from MembreEquipage import MembreEquipage
         reponseIdCmdtValide = self.estIdCmdtValide(idCmdt)
@@ -163,9 +144,6 @@ class Base:
         self._mesMembres.append(MembreEquipage(idMembre, role, self))
         return True
 
-    # =========================================================================
-    # UC2 — Créer un Module (Serre ou Garage)
-    # =========================================================================
     def ajouterModule(self, idTech: int, idModule: int, typeModule: str, coutModule: int) -> bool:
         from Serre import Serre
         from Garage import Garage
@@ -189,9 +167,6 @@ class Base:
         else:
             return False
 
-    # =========================================================================
-    # UC3 — Consommer une denrée alimentaire
-    # =========================================================================
     def consommerNourriture(self, idMembre: int, nbNourriture: int) -> bool:
         reponseIdMembreValide = self.estIdMembreValide(idMembre)
 
@@ -201,9 +176,6 @@ class Base:
         self._nbNourritureStock -= nbNourriture
         return True
 
-    # =========================================================================
-    # UC4 — Déclarer un Sinistre (Garage)
-    # =========================================================================
     def declarerSinistreGarage(self, idMembreAuteur: int, idSinistre: int,
                                 idGarage: int, dateCreation: str, ptDeVieResultant: int) -> bool:
         from Sinistre import Sinistre
@@ -231,9 +203,6 @@ class Base:
 
         return True
 
-    # =========================================================================
-    # UC5 — Déclarer un Sinistre (Serre)
-    # =========================================================================
     def declarerSinistreSerre(self, idMembreAuteur: int, idSinistre: int,
                                idSerre: int, dateCreation: str, ptDeVieResultant: int) -> bool:
         from Sinistre import Sinistre
@@ -261,16 +230,9 @@ class Base:
 
         return True
 
-    # =========================================================================
-    # UC6 — Lancer une Expédition
-    # =========================================================================
     def lancerExpedition(self, idChercheurLancement: int, idParticipant1: int,
                          idParticipant2: int, idExpedition: int,
                          idGarage: int, dateLancement: str) -> bool:
-        """
-        Valide les ids puis délègue la création au Garage.
-        Le chercheur lanceur ne participe PAS à l'expédition.
-        """
         reponseIdChercheurValide = self.estIdChercheurValide(idChercheurLancement)
         reponseIdParticipant1Valide = self.estIdChercheurValide(idParticipant1)
         reponseIdParticipant2Valide = self.estIdChercheurValide(idParticipant2)
@@ -282,7 +244,6 @@ class Base:
                 or reponseIdExpeditionValide or not reponseIdGarageValide):
             return False
 
-        # Les 3 ids doivent être distincts
         if len({idChercheurLancement, idParticipant1, idParticipant2}) != 3:
             return False
 
@@ -290,15 +251,11 @@ class Base:
         if garage.verifExpeditionEnCours():
             return False
 
-        # Délégation au Garage (point 5)
         garage.creerExpedition(idChercheurLancement, idParticipant1,
                                idParticipant2, idExpedition, dateLancement)
 
         return True
 
-    # =========================================================================
-    # UC7 — Planter des Graines
-    # =========================================================================
     def planterGraines(self, idSerre: int, idBio: int, nbGraine: int, idEvenement: int) -> bool:
         reponseIdBioValide = self.estIdBioValide(idBio)
         reponseIdSerreValide = self.estIdSerreValide(idSerre)
@@ -314,9 +271,6 @@ class Base:
         serre.creerEvenementSerre(idBio, idEvenement, nbGraine)
         return True
 
-    # =========================================================================
-    # UC8 — Réceptionner une Expédition
-    # =========================================================================
     def receptionnerExpedition(self, idChercheurRetour: int, idExpedition: int,
                                 nbPieceModule: int, dateRetour: str, ptDeVieResultant: int) -> bool:
         reponseIdChercheurValide = self.estIdChercheurValide(idChercheurRetour)
@@ -329,7 +283,6 @@ class Base:
         if garage is None:
             return False
 
-        # Point 6 : on passe idExpedition pour vérifier la bonne expédition
         if not garage.receptionnerExpedition(idExpedition, dateRetour, ptDeVieResultant):
             return False
 
@@ -348,9 +301,6 @@ class Base:
                 return g
         return None
 
-    # =========================================================================
-    # UC9 — Réceptionner une commande
-    # =========================================================================
     def receptionnerCommande(self, idCmdt: int, nbGraine: int, nbNourriture: int,
                               nbPieceModule: int) -> bool:
         reponseIdCmdtValide = self.estIdCmdtValide(idCmdt)
@@ -363,9 +313,6 @@ class Base:
         self._nbPieceModuleStock += nbPieceModule
         return True
 
-    # =========================================================================
-    # UC10 — Récolter des Plantations
-    # =========================================================================
     def recolterPlantation(self, idBio: int, idSerre: int, idEvenement: int) -> bool:
         reponseIdBioValide = self.estIdBioValide(idBio)
         reponseIdSerreValide = self.estIdSerreValide(idSerre)
@@ -386,9 +333,6 @@ class Base:
         serre.creerEvenementSerre(idBio, idEvenement, -nbPlantSerre)
         return True
 
-    # =========================================================================
-    # UC11 — Réparer un Garage
-    # =========================================================================
     def reparerGarage(self, idTech: int, idGarage: int, dateReparation: str) -> bool:
         reponseIdTechValide = self.estIdTechValide(idTech)
         reponseIdModuleValide = self.estIdGarageValide(idGarage)
@@ -417,9 +361,6 @@ class Base:
 
         return True
 
-    # =========================================================================
-    # UC12 — Réparer une Serre
-    # =========================================================================
     def reparerSerre(self, idTech: int, idModule: int, dateReparation: str) -> bool:
         reponseIdTechValide = self.estIdTechValide(idTech)
         reponseIdModuleValide = self.estIdSerreValide(idModule)
@@ -448,9 +389,6 @@ class Base:
 
         return True
 
-    # =========================================================================
-    # UC14 — Supprimer un Membre Equipage
-    # =========================================================================
     def supprimerMembre(self, idCmdt: int, idMembre: int) -> bool:
         reponseIdCmdtValide = self.estIdCmdtValide(idCmdt)
         reponseIdMembreValide = self.estIdMembreValide(idMembre)
@@ -463,9 +401,6 @@ class Base:
         membre.setEtat(0)
         return True
 
-    # =========================================================================
-    # UC15 — Supprimer un Garage
-    # =========================================================================
     def supprimerGarage(self, idTech: int, idGarage: int) -> bool:
         reponseIdTechValide = self.estIdTechValide(idTech)
         reponseIdGarageValide = self.estIdGarageValide(idGarage)
@@ -478,9 +413,6 @@ class Base:
         garage.setEtat(0)
         return True
 
-    # =========================================================================
-    # UC16 — Supprimer une Serre
-    # =========================================================================
     def supprimerSerre(self, idTech: int, idSerre: int) -> bool:
         reponseIdTechValide = self.estIdTechValide(idTech)
         reponseIdSerreValide = self.estIdSerreValide(idSerre)
@@ -492,10 +424,6 @@ class Base:
         self._nbPieceModuleStock += RECYCLAGE_MODULE
         serre.setEtat(0)
         return True
-
-    # =========================================================================
-    # Méthodes utilitaires
-    # =========================================================================
 
     def donneeStocks(self):
         return {
