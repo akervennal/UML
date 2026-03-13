@@ -18,7 +18,7 @@ class Garage(Module):
         self._mesExpeditions.append(expedition)
         return True
 
-    def creerExpedition(self, idChercheurLancement: int, idParticipant1: int,
+    def lancerExpedition(self, idChercheurLancement: int, idParticipant: int,
                         idParticipant2: int, idExpedition: int,
                         dateLancement: str) -> "Expedition":
         """
@@ -31,7 +31,7 @@ class Garage(Module):
         nouvelleExpedition = Expedition(idExpedition, idChercheurLancement, dateLancement, self._monSystem)
 
         chercheur = self._monSystem.trouverMembreEquipage(idChercheurLancement)
-        participant1 = self._monSystem.trouverMembreEquipage(idParticipant1)
+        participant1 = self._monSystem.trouverMembreEquipage(idParticipant)
         participant2 = self._monSystem.trouverMembreEquipage(idParticipant2)
 
         # Liaison chercheur lancement (lance mais ne participe PAS)
