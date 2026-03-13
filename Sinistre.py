@@ -9,7 +9,6 @@ if TYPE_CHECKING:
 class Sinistre:
     _idSinistre: int
     _dateCreation: str
-    _idMembreAuteur: int
     _ptDeVieResultant: int
     _etat: int          # 0 = en cours, 1 = réparé
     _dateReparation: str
@@ -18,17 +17,19 @@ class Sinistre:
     _monTechnicien: "MembreEquipage"
     _monModule: "Module"
 
-    def __init__(self, idSinistre: int, dateCreation: str, idMembreAuteur: int, ptDeVieResultant: int, s: "Base"):
+    def __init__(self, idSinistre: int, dateCreation: str, ptDeVieResultant: int,
+                 membre: "MembreEquipage", module: "Module", s: "Base"):
         self._idSinistre = idSinistre
         self._dateCreation = dateCreation
-        self._idMembreAuteur = idMembreAuteur
         self._ptDeVieResultant = ptDeVieResultant
         self._etat = 0
         self._dateReparation = None
         self._monSystem = s
-        self._monMembreAuteur = None
+        self._monMembreAuteur = membre
         self._monTechnicien = None
-        self._monModule = None
+        self._monModule = module
+        membre.lierSinistre(self)
+        module.lierSinistre(self)
 
     def getId(self) -> int:
         return self._idSinistre
@@ -47,18 +48,10 @@ class Sinistre:
         self._dateReparation = dateReparation
         return True
 
-    def lierMembreEquipage(self, membre: "MembreEquipage") -> bool:
-        self._monMembreAuteur = membre
-        return True
-
     def lierTechnicien(self, technicien: "MembreEquipage") -> bool:
         self._monTechnicien = technicien
         return True
 
-    def lierModule(self, module: "Module") -> bool:
-        self._monModule = module
-        return True
-
     def donnee(self):
-        return (self._idSinistre, self._dateCreation, self._idMembreAuteur,
+        return (self._idSinistre, self._dateCreation, self._monMembreAuteur.getId(),
                 self._ptDeVieResultant, self._etat)

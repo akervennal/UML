@@ -18,17 +18,22 @@ class Expedition:
     _monParticipant: "MembreEquipage"
     _monGarage: "Garage"
 
-    def __init__(self, idExpedition: int, dateLancement: str, s: "Base"):
+    def __init__(self, idExpedition: int, dateLancement: str,
+                 chercheurLancement: "MembreEquipage", participant: "MembreEquipage",
+                 garage: "Garage", s: "Base"):
         self._idExpedition = idExpedition
         self._dateLancement = dateLancement
         self._dateRetour = None
         self._ptDeVieResultant = None
         self._etat = 1
         self._monSystem = s
-        self._monChercheurLancement = None
+        self._monChercheurLancement = chercheurLancement
         self._monChercheurRetour = None
-        self._monParticipant = None
-        self._monGarage = None
+        self._monParticipant = participant
+        self._monGarage = garage
+        chercheurLancement.lierExpeditionLancee(self)
+        participant.lierExpeditionParticipee(self)
+        garage._mesExpeditions.append(self)
 
     def getId(self) -> int:
         return self._idExpedition
@@ -48,20 +53,8 @@ class Expedition:
         self._ptDeVieResultant = ptDeVieResultant
         return True
 
-    def lierGarage(self, garage: "Garage") -> bool:
-        self._monGarage = garage
-        return True
-
-    def lierChercheurLancement(self, membre: "MembreEquipage") -> bool:
-        self._monChercheurLancement = membre
-        return True
-
     def lierChercheurRetour(self, membre: "MembreEquipage") -> bool:
         self._monChercheurRetour = membre
-        return True
-
-    def lierParticipant(self, membre: "MembreEquipage") -> bool:
-        self._monParticipant = membre
         return True
 
     def donnee(self):

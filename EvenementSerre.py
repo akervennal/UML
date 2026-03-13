@@ -13,26 +13,21 @@ class EvenementSerre:
     _monBiologiste: "MembreEquipage"
     _maSerre: "Serre"
 
-    def __init__(self, idEvenementSerre: int, nbGraine: int, s: "Base"):
+    def __init__(self, idEvenementSerre: int, nbGraine: int,
+                 biologiste: "MembreEquipage", serre: "Serre", s: "Base"):
         self._idEvenementSerre = idEvenementSerre
         self._nbGraine = nbGraine
         self._monSystem = s
-        self._monBiologiste = None
-        self._maSerre = None
+        self._monBiologiste = biologiste
+        self._maSerre = serre
+        biologiste.lierEvenementSerre(self)
+        serre._mesEvenements.append(self)
 
     def getId(self) -> int:
         return self._idEvenementSerre
 
     def getNbGraine(self) -> int:
         return self._nbGraine
-
-    def lierMembreEquipage(self, membre: "MembreEquipage") -> bool:
-        self._monBiologiste = membre
-        return True
-
-    def lierSerre(self, serre: "Serre") -> bool:
-        self._maSerre = serre
-        return True
 
     def donnee(self):
         return (self._idEvenementSerre, self._nbGraine)

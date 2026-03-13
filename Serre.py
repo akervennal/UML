@@ -5,6 +5,7 @@ if TYPE_CHECKING:
     from Base import Base
     from Sinistre import Sinistre
     from EvenementSerre import EvenementSerre
+    from MembreEquipage import MembreEquipage
 
 
 class Serre(Module):
@@ -23,15 +24,9 @@ class Serre(Module):
         self._nbPlantSerre = nb
         return True
 
-    def creerEvenementSerre(self, idBio: int, idEvenementSerre: int, nbGraine: int) -> "EvenementSerre":
+    def creerEvenementSerre(self, biologiste: "MembreEquipage", idEvenementSerre: int, nbGraine: int) -> None:
         from EvenementSerre import EvenementSerre
-        nouvelEvenement = EvenementSerre(idEvenementSerre, nbGraine, self._monSystem)
-        biologiste = self._monSystem.trouverMembreEquipage(idBio)
-        nouvelEvenement.lierMembreEquipage(biologiste)
-        biologiste.lierEvenementSerre(nouvelEvenement)
-        nouvelEvenement.lierSerre(self)
-        self._mesEvenements.append(nouvelEvenement)
-        return nouvelEvenement
+        EvenementSerre(idEvenementSerre, nbGraine, biologiste, self, self._monSystem)
 
     def donnee(self):
         return (self._idModule, self._nbPlantSerre, self._etat)
