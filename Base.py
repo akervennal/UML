@@ -89,7 +89,7 @@ class Base:
 
     def estIdExpeditionValide(self, idExpedition: int) -> bool:
         for g in self._mesGarages:
-            if g.aExpedition(idExpedition):
+            if g.estIdExpeditionValide(idExpedition):
                 return True
         return False
 
@@ -297,7 +297,7 @@ class Base:
 
     def _trouverGarageAvecExpedition(self, idExpedition: int) -> "Garage":
         for g in self._mesGarages:
-            if g.aExpedition(idExpedition):
+            if g.estIdExpeditionValide(idExpedition):
                 return g
         return None
 

@@ -57,7 +57,7 @@ class Garage(Module):
                 return True
         return False
 
-    def aExpedition(self, idExpedition: int) -> bool:
+    def estIdExpeditionValide(self, idExpedition: int) -> bool:
         for e in self._mesExpeditions:
             if e.getId() == idExpedition:
                 return True
