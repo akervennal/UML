@@ -41,7 +41,7 @@ class Base:
         self._mesSerres = []
         self._mesSinistres = []
         from MembreEquipage import MembreEquipage
-        self._mesMembres.append(MembreEquipage(idCmdt, ROLE_COMMANDANT, self))
+        self._mesMembres.append(MembreEquipage(idCmdt, ROLE_COMMANDANT))
 
     def estIdMembreValide(self, idMembre: int) -> "MembreEquipage | None":
         for m in self._mesMembres:
@@ -114,7 +114,7 @@ class Base:
         from MembreEquipage import MembreEquipage
         if not self.estIdCmdtValide(idCmdt) or self.estIdMembreValide(idMembre) or role not in ROLES_VALIDES:
             return False
-        self._mesMembres.append(MembreEquipage(idMembre, role, self))
+        self._mesMembres.append(MembreEquipage(idMembre, role))
         return True
 
     def ajouterModule(self, idTech: int, idModule: int, typeModule: str, coutModule: int) -> bool:
@@ -142,7 +142,7 @@ class Base:
         from Sinistre import Sinistre
         membre = self.estIdMembreValide(idMembreAuteur)
         garage = self.estIdGarageValide(idGarage)
-        if not membre or not garage or self.estIdSinistreValide(idSinistre) or garage.verifSinistreEnCours():
+        if not membre or not garage or self.estIdSinistreValide(idSinistre) or garage.getSinistreEnCours():
             return False
         nouveauSinistre = Sinistre(idSinistre, dateCreation, ptDeVieResultant, membre, garage, self)
         self._mesSinistres.append(nouveauSinistre)
@@ -153,7 +153,7 @@ class Base:
         from Sinistre import Sinistre
         membre = self.estIdMembreValide(idMembreAuteur)
         serre = self.estIdSerreValide(idSerre)
-        if not membre or not serre or self.estIdSinistreValide(idSinistre) or serre.verifSinistreEnCours():
+        if not membre or not serre or self.estIdSinistreValide(idSinistre) or serre.getSinistreEnCours():
             return False
         nouveauSinistre = Sinistre(idSinistre, dateCreation, ptDeVieResultant, membre, serre, self)
         self._mesSinistres.append(nouveauSinistre)
@@ -171,7 +171,7 @@ class Base:
             return False
         if garage.verifExpeditionEnCours():
             return False
-        Expedition(idExpedition, dateLancement, chercheur, participant, garage, self)
+        Expedition(idExpedition, dateLancement, chercheur, participant, garage)
         return True
 
     def planterGraines(self, idSerre: int, idBio: int, nbGraine: int, idEvenement: int) -> bool:

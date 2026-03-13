@@ -1,7 +1,6 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from Base import Base
     from MembreEquipage import MembreEquipage
     from Garage import Garage
 
@@ -12,7 +11,6 @@ class Expedition:
     _dateRetour: str
     _ptDeVieResultant: int
     _etat: int          # 1 = en cours, 0 = terminée
-    _monSystem: "Base"
     _monChercheurLancement: "MembreEquipage"
     _monChercheurRetour: "MembreEquipage"
     _monParticipant: "MembreEquipage"
@@ -20,13 +18,12 @@ class Expedition:
 
     def __init__(self, idExpedition: int, dateLancement: str,
                  chercheurLancement: "MembreEquipage", participant: "MembreEquipage",
-                 garage: "Garage", base: "Base"):
+                 garage: "Garage"):
         self._idExpedition = idExpedition
         self._dateLancement = dateLancement
         self._dateRetour = None
         self._ptDeVieResultant = None
         self._etat = 1
-        self._monSystem = base
         self._monChercheurLancement = chercheurLancement
         self._monChercheurRetour = None
         self._monParticipant = participant

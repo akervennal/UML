@@ -26,7 +26,7 @@ class Serre(Module):
 
     def creerEvenementSerre(self, biologiste: "MembreEquipage", idEvenementSerre: int, nbGraine: int) -> None:
         from EvenementSerre import EvenementSerre
-        EvenementSerre(idEvenementSerre, nbGraine, biologiste, self, self._monSystem)
+        EvenementSerre(idEvenementSerre, nbGraine, biologiste, self)
 
     def lierEvenementSerre(self, evenement: "EvenementSerre") -> bool:
         self._mesEvenements.append(evenement)

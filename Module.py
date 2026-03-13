@@ -27,12 +27,6 @@ class Module:
         self._etat = etat
         return True
 
-    def verifSinistreEnCours(self) -> bool:
-        for s in self._mesSinistres:
-            if s.getEtat() == 0:
-                return True
-        return False
-
     def getSinistreEnCours(self) -> "Sinistre":
         for s in self._mesSinistres:
             if s.getEtat() == 0:

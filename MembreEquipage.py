@@ -1,7 +1,6 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from Base import Base
     from Sinistre import Sinistre
     from Expedition import Expedition
     from EvenementSerre import EvenementSerre
@@ -11,18 +10,16 @@ class MembreEquipage:
     _idMembre: int
     _roleMembre: str
     _etat: int
-    _monSystem: "Base"
     _mesSinistres: list["Sinistre"]
     _mesExpeditionsLancees: list["Expedition"]
     _mesExpeditionsParticipees: list["Expedition"]
     _mesExpeditionsReceptionnees: list["Expedition"]
     _mesEvenementsSerre: list["EvenementSerre"]
 
-    def __init__(self, idMembre: int, roleMembre: str, base: "Base"):
+    def __init__(self, idMembre: int, roleMembre: str):
         self._idMembre = idMembre
         self._roleMembre = roleMembre
         self._etat = 1
-        self._monSystem = base
         self._mesSinistres = []
         self._mesExpeditionsLancees = []
         self._mesExpeditionsParticipees = []
