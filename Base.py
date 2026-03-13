@@ -43,31 +43,31 @@ class Base:
         from MembreEquipage import MembreEquipage
         self._mesMembres.append(MembreEquipage(idCmdt, ROLE_COMMANDANT))
 
-    def estIdMembreValide(self, idMembre: int) -> "MembreEquipage | None":
+    def getIdMembreValide(self, idMembre: int) -> "MembreEquipage | None":
         for m in self._mesMembres:
             if m.getId() == idMembre and m.getEtatMembreEquipage() == 1:
                 return m
         return None
 
-    def estIdCmdtValide(self, idCmdt: int) -> "MembreEquipage | None":
+    def getIdCmdtValide(self, idCmdt: int) -> "MembreEquipage | None":
         for m in self._mesMembres:
             if m.getId() == idCmdt and m.getEtatMembreEquipage() == 1 and m.getRoleMembre() == ROLE_COMMANDANT:
                 return m
         return None
 
-    def estIdTechValide(self, idTech: int) -> "MembreEquipage | None":
+    def getIdTechValide(self, idTech: int) -> "MembreEquipage | None":
         for m in self._mesMembres:
             if m.getId() == idTech and m.getEtatMembreEquipage() == 1 and m.getRoleMembre() == ROLE_TECHNICIEN:
                 return m
         return None
 
-    def estIdBioValide(self, idBio: int) -> "MembreEquipage | None":
+    def getIdBioValide(self, idBio: int) -> "MembreEquipage | None":
         for m in self._mesMembres:
             if m.getId() == idBio and m.getEtatMembreEquipage() == 1 and m.getRoleMembre() == ROLE_BIOLOGISTE:
                 return m
         return None
 
-    def estIdChercheurValide(self, idChercheur: int) -> "MembreEquipage | None":
+    def getIdChercheurValide(self, idChercheur: int) -> "MembreEquipage | None":
         for m in self._mesMembres:
             if (m.getId() == idChercheur and m.getEtatMembreEquipage() == 1
                     and m.getRoleMembre() == ROLE_CHERCHEUR
@@ -75,44 +75,44 @@ class Base:
                 return m
         return None
 
-    def estIdGarageValide(self, idGarage: int) -> "Garage | None":
+    def getIdGarageValide(self, idGarage: int) -> "Garage | None":
         for g in self._mesGarages:
             if g.getId() == idGarage and g.getEtat() == 1:
                 return g
         return None
 
-    def estIdSerreValide(self, idSerre: int) -> "Serre | None":
+    def getIdSerreValide(self, idSerre: int) -> "Serre | None":
         for s in self._mesSerres:
             if s.getId() == idSerre and s.getEtat() == 1:
                 return s
         return None
 
-    def estIdModuleValide(self, idModule: int) -> "Module | None":
-        return self.estIdGarageValide(idModule) or self.estIdSerreValide(idModule)
+    def getIdModuleValide(self, idModule: int) -> "Module | None":
+        return self.getIdGarageValide(idModule) or self.getIdSerreValide(idModule)
 
-    def estIdExpeditionValide(self, idExpedition: int) -> "Expedition | None":
+    def getIdExpeditionValide(self, idExpedition: int) -> "Expedition | None":
         for g in self._mesGarages:
-            expedition = g.estIdExpeditionValide(idExpedition)
+            expedition = g.getIdExpeditionValide(idExpedition)
             if expedition:
                 return expedition
         return None
 
-    def estIdSinistreValide(self, idSinistre: int) -> "Sinistre | None":
+    def getIdSinistreValide(self, idSinistre: int) -> "Sinistre | None":
         for s in self._mesSinistres:
             if s.getId() == idSinistre:
                 return s
         return None
 
-    def estIdEvenementSerreValide(self, idEvenement: int) -> "EvenementSerre | None":
+    def getIdEvenementSerreValide(self, idEvenement: int) -> "EvenementSerre | None":
         for s in self._mesSerres:
-            e = s.estIdEvenementValide(idEvenement)
+            e = s.getIdEvenementValide(idEvenement)
             if e:
                 return e
         return None
 
     def ajouterMembre(self, idCmdt: int, idMembre: int, role: str) -> bool:
         from MembreEquipage import MembreEquipage
-        if not self.estIdCmdtValide(idCmdt) or self.estIdMembreValide(idMembre) or role not in ROLES_VALIDES:
+        if not self.getIdCmdtValide(idCmdt) or self.getIdMembreValide(idMembre) or role not in ROLES_VALIDES:
             return False
         self._mesMembres.append(MembreEquipage(idMembre, role))
         return True
@@ -120,7 +120,7 @@ class Base:
     def ajouterModule(self, idTech: int, idModule: int, typeModule: str, coutModule: int) -> bool:
         from Serre import Serre
         from Garage import Garage
-        if not self.estIdTechValide(idTech) or self.estIdModuleValide(idModule) or self._nbPieceModuleStock < coutModule:
+        if not self.getIdTechValide(idTech) or self.getIdModuleValide(idModule) or self._nbPieceModuleStock < coutModule:
             return False
         if typeModule == "Serre":
             self._mesSerres.append(Serre(idModule, self))
@@ -132,7 +132,7 @@ class Base:
         return True
 
     def consommerNourriture(self, idMembre: int, nbNourriture: int) -> bool:
-        if not self.estIdMembreValide(idMembre) or self._nbNourritureStock < nbNourriture:
+        if not self.getIdMembreValide(idMembre) or self._nbNourritureStock < nbNourriture:
             return False
         self._nbNourritureStock -= nbNourriture
         return True
@@ -140,44 +140,44 @@ class Base:
     def declarerSinistreGarage(self, idMembreAuteur: int, idSinistre: int,
                                 idGarage: int, dateCreation: str, ptDeVieResultant: int) -> bool:
         from Sinistre import Sinistre
-        membre = self.estIdMembreValide(idMembreAuteur)
-        garage = self.estIdGarageValide(idGarage)
-        if not membre or not garage or self.estIdSinistreValide(idSinistre) or garage.getSinistreEnCours():
+        membre = self.getIdMembreValide(idMembreAuteur)
+        garage = self.getIdGarageValide(idGarage)
+        if not membre or not garage or self.getIdSinistreValide(idSinistre) or garage.getSinistreEnCours():
             return False
-        nouveauSinistre = Sinistre(idSinistre, dateCreation, ptDeVieResultant, membre, garage, self)
+        nouveauSinistre = Sinistre(idSinistre, dateCreation, ptDeVieResultant, membre, garage)
         self._mesSinistres.append(nouveauSinistre)
         return True
 
     def declarerSinistreSerre(self, idMembreAuteur: int, idSinistre: int,
                                idSerre: int, dateCreation: str, ptDeVieResultant: int) -> bool:
         from Sinistre import Sinistre
-        membre = self.estIdMembreValide(idMembreAuteur)
-        serre = self.estIdSerreValide(idSerre)
-        if not membre or not serre or self.estIdSinistreValide(idSinistre) or serre.getSinistreEnCours():
+        membre = self.getIdMembreValide(idMembreAuteur)
+        serre = self.getIdSerreValide(idSerre)
+        if not membre or not serre or self.getIdSinistreValide(idSinistre) or serre.getSinistreEnCours():
             return False
-        nouveauSinistre = Sinistre(idSinistre, dateCreation, ptDeVieResultant, membre, serre, self)
+        nouveauSinistre = Sinistre(idSinistre, dateCreation, ptDeVieResultant, membre, serre)
         self._mesSinistres.append(nouveauSinistre)
         return True
 
     def lancerExpedition(self, idChercheurLancement: int, idParticipant: int,
                          idExpedition: int, idGarage: int, dateLancement: str) -> bool:
         from Expedition import Expedition
-        chercheur = self.estIdChercheurValide(idChercheurLancement)
-        participant = self.estIdChercheurValide(idParticipant)
-        garage = self.estIdGarageValide(idGarage)
+        chercheur = self.getIdChercheurValide(idChercheurLancement)
+        participant = self.getIdChercheurValide(idParticipant)
+        garage = self.getIdGarageValide(idGarage)
         if not chercheur or not participant or not garage:
             return False
-        if self.estIdExpeditionValide(idExpedition) or idChercheurLancement == idParticipant:
+        if self.getIdExpeditionValide(idExpedition) or idChercheurLancement == idParticipant:
             return False
-        if garage.verifExpeditionEnCours():
+        if garage.getExpeditionEnCours():
             return False
         Expedition(idExpedition, dateLancement, chercheur, participant, garage)
         return True
 
     def planterGraines(self, idSerre: int, idBio: int, nbGraine: int, idEvenement: int) -> bool:
-        bio = self.estIdBioValide(idBio)
-        serre = self.estIdSerreValide(idSerre)
-        if not bio or not serre or self._nbGraineStock < nbGraine or self.estIdEvenementSerreValide(idEvenement):
+        bio = self.getIdBioValide(idBio)
+        serre = self.getIdSerreValide(idSerre)
+        if not bio or not serre or self._nbGraineStock < nbGraine or self.getIdEvenementSerreValide(idEvenement):
             return False
         serre.setNbPlantSerre(serre.getNbPlantSerre() + nbGraine)
         self._nbGraineStock -= nbGraine
@@ -186,8 +186,8 @@ class Base:
 
     def receptionnerExpedition(self, idChercheurRetour: int, idExpedition: int,
                                 nbPieceModule: int, dateRetour: str, ptDeVieResultant: int) -> bool:
-        chercheur = self.estIdChercheurValide(idChercheurRetour)
-        expedition = self.estIdExpeditionValide(idExpedition)
+        chercheur = self.getIdChercheurValide(idChercheurRetour)
+        expedition = self.getIdExpeditionValide(idExpedition)
         if not chercheur or not expedition:
             return False
         if not expedition.getGarage().receptionnerExpedition(expedition, dateRetour, ptDeVieResultant):
@@ -199,7 +199,7 @@ class Base:
 
     def receptionnerCommande(self, idCmdt: int, nbGraine: int, nbNourriture: int,
                               nbPieceModule: int) -> bool:
-        if not self.estIdCmdtValide(idCmdt):
+        if not self.getIdCmdtValide(idCmdt):
             return False
         self._nbGraineStock += nbGraine
         self._nbNourritureStock += nbNourriture
@@ -207,9 +207,9 @@ class Base:
         return True
 
     def recolterPlantation(self, idBio: int, idSerre: int, idEvenement: int) -> bool:
-        bio = self.estIdBioValide(idBio)
-        serre = self.estIdSerreValide(idSerre)
-        if not bio or not serre or self.estIdEvenementSerreValide(idEvenement):
+        bio = self.getIdBioValide(idBio)
+        serre = self.getIdSerreValide(idSerre)
+        if not bio or not serre or self.getIdEvenementSerreValide(idEvenement):
             return False
         nbPlantSerre = serre.getNbPlantSerre()
         if nbPlantSerre == 0:
@@ -220,8 +220,8 @@ class Base:
         return True
 
     def reparerGarage(self, idTech: int, idGarage: int, dateReparation: str) -> bool:
-        tech = self.estIdTechValide(idTech)
-        garage = self.estIdGarageValide(idGarage)
+        tech = self.getIdTechValide(idTech)
+        garage = self.getIdGarageValide(idGarage)
         if not tech or not garage:
             return False
         sinistreEnCours = garage.getSinistreEnCours()
@@ -238,8 +238,8 @@ class Base:
         return True
 
     def reparerSerre(self, idTech: int, idModule: int, dateReparation: str) -> bool:
-        tech = self.estIdTechValide(idTech)
-        serre = self.estIdSerreValide(idModule)
+        tech = self.getIdTechValide(idTech)
+        serre = self.getIdSerreValide(idModule)
         if not tech or not serre:
             return False
         sinistreEnCours = serre.getSinistreEnCours()
@@ -256,8 +256,8 @@ class Base:
         return True
 
     def supprimerMembre(self, idCmdt: int, idMembre: int) -> bool:
-        cmdt = self.estIdCmdtValide(idCmdt)
-        membre = self.estIdMembreValide(idMembre)
+        cmdt = self.getIdCmdtValide(idCmdt)
+        membre = self.getIdMembreValide(idMembre)
         if not cmdt or not membre:
             return False
         self._nbNourritureStock += RECYCLAGE
@@ -265,8 +265,8 @@ class Base:
         return True
 
     def supprimerGarage(self, idTech: int, idGarage: int) -> bool:
-        tech = self.estIdTechValide(idTech)
-        garage = self.estIdGarageValide(idGarage)
+        tech = self.getIdTechValide(idTech)
+        garage = self.getIdGarageValide(idGarage)
         if not tech or not garage:
             return False
         self._nbPieceModuleStock += RECYCLAGE_MODULE
@@ -274,8 +274,8 @@ class Base:
         return True
 
     def supprimerSerre(self, idTech: int, idSerre: int) -> bool:
-        tech = self.estIdTechValide(idTech)
-        serre = self.estIdSerreValide(idSerre)
+        tech = self.getIdTechValide(idTech)
+        serre = self.getIdSerreValide(idSerre)
         if not tech or not serre:
             return False
         self._nbPieceModuleStock += RECYCLAGE_MODULE

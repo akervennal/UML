@@ -3,9 +3,7 @@ from Base import Base
 print("=== Initialisation de la Base ===")
 base = Base(0)  # commandant id=0
 
-base._nbGraineStock = 100
-base._nbNourritureStock = 50
-base._nbPieceModuleStock = 200
+base.receptionnerCommande(0, 100, 50, 200)
 
 print("\n=== UC1 — Ajouter un Membre d'équipage ===")
 print(base.ajouterMembre(0, 1, "Technicien"))   # True

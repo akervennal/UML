@@ -14,13 +14,13 @@ class Garage(Module):
         super().__init__(idGarage, base)
         self._mesExpeditions = []
 
-    def verifExpeditionEnCours(self) -> bool:
+    def getExpeditionEnCours(self) -> "Expedition | None":
         for e in self._mesExpeditions:
             if e.getEtat() == 1:
-                return True
-        return False
+                return e
+        return None
 
-    def estIdExpeditionValide(self, idExpedition: int) -> "Expedition | None":
+    def getIdExpeditionValide(self, idExpedition: int) -> "Expedition | None":
         for e in self._mesExpeditions:
             if e.getId() == idExpedition:
                 return e
@@ -33,12 +33,6 @@ class Garage(Module):
         expedition.setDateRetour(dateRetour)
         expedition.setPtDeVie(ptDeVieResultant)
         return True
-
-    def _getExpeditionEnCours(self) -> "Expedition":
-        for e in self._mesExpeditions:
-            if e.getEtat() == 1:
-                return e
-        return None
 
     def lierExpedition(self, expedition: "Expedition") -> bool:
         self._mesExpeditions.append(expedition)

@@ -32,7 +32,7 @@ class Serre(Module):
         self._mesEvenements.append(evenement)
         return True
 
-    def estIdEvenementValide(self, idEvenement: int) -> "EvenementSerre | None":
+    def getIdEvenementValide(self, idEvenement: int) -> "EvenementSerre | None":
         for e in self._mesEvenements:
             if e.getId() == idEvenement:
                 return e

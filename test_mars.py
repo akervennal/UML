@@ -10,9 +10,7 @@ from Base import Base
 def base():
     """Initialise la base avec le commandant (id=0) et les stocks de départ."""
     b = Base(0)  # commandant id=0
-    b._nbGraineStock = 100
-    b._nbNourritureStock = 50
-    b._nbPieceModuleStock = 200
+    b.receptionnerCommande(0, 100, 50, 200)
     return b
 
 
