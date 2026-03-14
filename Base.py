@@ -1,13 +1,14 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
+from MembreEquipage import MembreEquipage
+from Garage import Garage
+from Serre import Serre
+from Sinistre import Sinistre
+from Expedition import Expedition
+from EvenementSerre import EvenementSerre
+
 if TYPE_CHECKING:
-    from MembreEquipage import MembreEquipage
-    from Garage import Garage
-    from Serre import Serre
-    from Sinistre import Sinistre
-    from Expedition import Expedition
-    from EvenementSerre import EvenementSerre
     from Module import Module
 
 RECYCLAGE = 10
@@ -40,7 +41,6 @@ class Base:
         self._mesGarages = []
         self._mesSerres = []
         self._mesSinistres = []
-        from MembreEquipage import MembreEquipage
         self._mesMembres.append(MembreEquipage(idCmdt, ROLE_COMMANDANT))
 
     def getIdMembreValide(self, idMembre: int) -> "MembreEquipage | None":
@@ -111,15 +111,12 @@ class Base:
         return None
 
     def ajouterMembre(self, idCmdt: int, idMembre: int, role: str) -> bool:
-        from MembreEquipage import MembreEquipage
         if not self.getIdCmdtValide(idCmdt) or self.getIdMembreValide(idMembre) or role not in ROLES_VALIDES:
             return False
         self._mesMembres.append(MembreEquipage(idMembre, role))
         return True
 
     def ajouterModule(self, idTech: int, idModule: int, typeModule: str, coutModule: int) -> bool:
-        from Serre import Serre
-        from Garage import Garage
         if not self.getIdTechValide(idTech) or self.getIdModuleValide(idModule) or self._nbPieceModuleStock < coutModule:
             return False
         if typeModule == "Serre":
@@ -139,7 +136,6 @@ class Base:
 
     def declarerSinistreGarage(self, idMembreAuteur: int, idSinistre: int,
                                 idGarage: int, dateCreation: str, ptDeVieResultant: int) -> bool:
-        from Sinistre import Sinistre
         membre = self.getIdMembreValide(idMembreAuteur)
         garage = self.getIdGarageValide(idGarage)
         if not membre or not garage or self.getIdSinistreValide(idSinistre) or garage.getSinistreEnCours():
@@ -150,7 +146,6 @@ class Base:
 
     def declarerSinistreSerre(self, idMembreAuteur: int, idSinistre: int,
                                idSerre: int, dateCreation: str, ptDeVieResultant: int) -> bool:
-        from Sinistre import Sinistre
         membre = self.getIdMembreValide(idMembreAuteur)
         serre = self.getIdSerreValide(idSerre)
         if not membre or not serre or self.getIdSinistreValide(idSinistre) or serre.getSinistreEnCours():
@@ -161,7 +156,6 @@ class Base:
 
     def lancerExpedition(self, idChercheurLancement: int, idParticipant: int,
                          idExpedition: int, idGarage: int, dateLancement: str) -> bool:
-        from Expedition import Expedition
         chercheur = self.getIdChercheurValide(idChercheurLancement)
         participant = self.getIdChercheurValide(idParticipant)
         garage = self.getIdGarageValide(idGarage)

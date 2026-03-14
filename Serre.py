@@ -1,10 +1,10 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 from Module import Module
+from EvenementSerre import EvenementSerre
 if TYPE_CHECKING:
     from Base import Base
     from Sinistre import Sinistre
-    from EvenementSerre import EvenementSerre
     from MembreEquipage import MembreEquipage
 
 
@@ -25,7 +25,6 @@ class Serre(Module):
         return True
 
     def creerEvenementSerre(self, biologiste: "MembreEquipage", idEvenementSerre: int, nbGraine: int) -> None:
-        from EvenementSerre import EvenementSerre
         EvenementSerre(idEvenementSerre, nbGraine, biologiste, self)
 
     def lierEvenementSerre(self, evenement: "EvenementSerre") -> bool:
