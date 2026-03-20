@@ -4,7 +4,9 @@
       "Bash(python -m pytest test_mars.py -v)",
       "Bash(python -m pytest test_mars.py::test_uc9_stocks_apres_commande -v)",
       "Bash(python generate_data.py)",
-      "Bash(MPLBACKEND=Agg python analyse_stats.py)"
+      "Bash(MPLBACKEND=Agg python analyse_stats.py)",
+      "Bash(python analyse_stats.py)",
+      "Bash(python -c \":*)"
     ]
   }
 }

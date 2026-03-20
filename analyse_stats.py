@@ -13,6 +13,8 @@ with open("simulation_data.pkl", "rb") as f:
     data = pickle.load(f)
 
 historique_stocks = data["historique_stocks"]
+historique_effectifs = data["historique_effectifs"]
+historique_modules = data["historique_modules"]
 log_operations = data["log_operations"]
 log_expeditions = data["log_expeditions"]
 log_sinistres = data["log_sinistres"]
@@ -30,7 +32,7 @@ os.makedirs("graphiques", exist_ok=True)
 
 def save_and_show(fig, filename):
     fig.savefig(f"graphiques/{filename}", dpi=150, bbox_inches="tight")
-    plt.show()
+    plt.close(fig)
 
 
 # ================================================================
@@ -279,7 +281,9 @@ charge_par_role = defaultdict(int)
 for m in donnees_membres:
     if m["etat"] == 1:
         total = (m["nb_sinistres"] + m["nb_exp_lancees"] + m["nb_exp_participees"]
-                 + m["nb_exp_receptionnees"] + m["nb_evenements_serre"])
+                 + m["nb_exp_receptionnees"] + m["nb_evenements_serre"]
+                 + m["nb_commandes_receptionnees"] + m["nb_membres_ajoutes"]
+                 + m["nb_membres_supprimes"])
         charge_par_role[m["role"]] += total
 
 colors_roles = {"Commandant": "#ff6b6b", "Technicien": "#4ecdc4",
@@ -342,12 +346,19 @@ series = {
     "Consommation": [0.0] * nb_p,
 }
 
+count_stocks = [0] * nb_p
 for jour, g, n, p in historique_stocks:
     idx = jour // periode_corr
     if idx < nb_p:
-        series["Graines"][idx] = g
-        series["Nourriture"][idx] = n
-        series["Pieces"][idx] = p
+        series["Graines"][idx] += g
+        series["Nourriture"][idx] += n
+        series["Pieces"][idx] += p
+        count_stocks[idx] += 1
+for i in range(nb_p):
+    if count_stocks[i] > 0:
+        series["Graines"][i] /= count_stocks[i]
+        series["Nourriture"][i] /= count_stocks[i]
+        series["Pieces"][i] /= count_stocks[i]
 
 for s in log_sinistres:
     idx = s["jour_creation"] // periode_corr
@@ -390,100 +401,159 @@ fig.tight_layout()
 save_and_show(fig, "08_heatmap_correlation.png")
 
 # ================================================================
-# 9. LINE CHART - Simulation Monte Carlo (avec echelle log pour lisibilite)
+# 9. LINE CHART - Evolution des effectifs par role
 # ================================================================
-from Base import Base as BaseClass
-import random as rng
+jours_eff = [e[0] for e in historique_effectifs]
+total_eff  = [e[1] for e in historique_effectifs]
+tech_eff   = [e[2] for e in historique_effectifs]
+bio_eff    = [e[3] for e in historique_effectifs]
+cher_eff   = [e[4] for e in historique_effectifs]
 
-# Scenarios avec parametres differents
-scenarios = [
-    {"nom": "Faible equip. (40 membres)",       "nb_membres": 40,  "freq_ravit": 20, "ravit_nourr": (60, 120)},
-    {"nom": "Standard (60 membres)",             "nb_membres": 60,  "freq_ravit": 20, "ravit_nourr": (80, 200)},
-    {"nom": "Grand equip. (100 membres)",        "nb_membres": 100, "freq_ravit": 20, "ravit_nourr": (80, 200)},
-    {"nom": "Ravit. frequent (10j)",             "nb_membres": 60,  "freq_ravit": 10, "ravit_nourr": (80, 200)},
-    {"nom": "Ravit. rare (40j)",                 "nb_membres": 60,  "freq_ravit": 40, "ravit_nourr": (80, 200)},
-    {"nom": "Grosses commandes",                 "nb_membres": 60,  "freq_ravit": 20, "ravit_nourr": (200, 400)},
-    {"nom": "Petites commandes",                 "nb_membres": 60,  "freq_ravit": 20, "ravit_nourr": (30, 80)},
-    {"nom": "Pire cas (100 memb, ravit rare)",   "nb_membres": 100, "freq_ravit": 40, "ravit_nourr": (50, 100)},
-]
+fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(13, 8), sharex=True)
 
-NB_JOURS_MC = 500
-colors_mc = plt.cm.tab10(np.linspace(0, 1, len(scenarios)))
-
-# Collecter toutes les courbes
-all_curves = []
-for idx, sc in enumerate(scenarios):
-    rng.seed(idx * 13 + 7)
-    b = BaseClass(9000 + idx)
-    b.receptionnerCommande(9000 + idx, 400, 400, 300)
-
-    mid = 9001 + idx * 200
-    techs_mc, bios_mc, cherch_mc = [], [], []
-    nb_m = sc["nb_membres"]
-    for role, lst, ratio in [("Technicien", techs_mc, 0.25), ("Biologiste", bios_mc, 0.25), ("Chercheur", cherch_mc, 0.48)]:
-        for _ in range(int(nb_m * ratio)):
-            b.ajouterMembre(9000 + idx, mid, role)
-            lst.append(mid)
-            mid += 1
-
-    mod_id = 1
-    serres_mc = []
-    for _ in range(10):
-        if techs_mc:
-            b.ajouterModule(techs_mc[0], mod_id, "Serre", 5)
-            serres_mc.append(mod_id)
-            mod_id += 1
-
-    nourriture_mc = []
-    eid_mc = 1
-
-    for jour in range(NB_JOURS_MC):
-        if jour % sc["freq_ravit"] == 0 and jour > 0:
-            lo, hi = sc["ravit_nourr"]
-            b.receptionnerCommande(9000 + idx, rng.randint(30, 80), rng.randint(lo, hi), rng.randint(10, 30))
-
-        nb_mang = max(2, sc["nb_membres"] // 10)
-        for _ in range(rng.randint(nb_mang // 2, nb_mang)):
-            if techs_mc + bios_mc + cherch_mc:
-                b.consommerNourriture(rng.choice(techs_mc + bios_mc + cherch_mc), rng.randint(1, 3))
-
-        if rng.random() < 0.35 and bios_mc and serres_mc:
-            b.planterGraines(rng.choice(serres_mc), rng.choice(bios_mc), rng.randint(2, 10), eid_mc)
-            eid_mc += 1
-
-        if rng.random() < 0.25 and bios_mc and serres_mc:
-            b.recolterPlantation(rng.choice(bios_mc), rng.choice(serres_mc), eid_mc)
-            eid_mc += 1
-
-        nourriture_mc.append(b.donneeStocks()["nourriture"])
-
-    all_curves.append(nourriture_mc)
-
-# 2 sous-graphiques : echelle lineaire + echelle log
-fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(13, 10), sharex=True)
-
-for idx, (sc, curve) in enumerate(zip(scenarios, all_curves)):
-    ax1.plot(range(NB_JOURS_MC), curve, alpha=0.8, color=colors_mc[idx],
-             label=sc["nom"], linewidth=1.5)
-    ax2.plot(range(NB_JOURS_MC), [max(v, 1) for v in curve], alpha=0.8,
-             color=colors_mc[idx], label=sc["nom"], linewidth=1.5)
-
-ax1.axhline(y=0, color="red", linestyle="--", alpha=0.5, linewidth=2)
-ax1.set_ylabel("Stock de nourriture")
-ax1.set_title("9. Simulation Monte Carlo - Scenarios de survie alimentaire")
-ax1.legend(fontsize=7, loc="upper left")
+# Haut : lignes par role + total
+ax1.plot(jours_eff, total_eff, color="black", linewidth=2.5, label="Total")
+ax1.plot(jours_eff, tech_eff,  color="#4ecdc4", linewidth=1.5, label="Techniciens")
+ax1.plot(jours_eff, bio_eff,   color="#45b7d1", linewidth=1.5, label="Biologistes")
+ax1.plot(jours_eff, cher_eff,  color="#f9ca24", linewidth=1.5, label="Chercheurs")
+ax1.set_ylabel("Nombre de membres actifs")
+ax1.set_title("9. Evolution des effectifs au fil du temps")
+ax1.legend(fontsize=9)
 ax1.grid(True, alpha=0.3)
 
-ax2.set_yscale("log")
-ax2.axhline(y=20, color="red", linestyle="--", alpha=0.5, linewidth=2, label="Seuil critique (20)")
+# Bas : aires empilees pour voir la composition
+ax2.stackplot(jours_eff, tech_eff, bio_eff, cher_eff,
+              labels=["Techniciens", "Biologistes", "Chercheurs"],
+              colors=["#4ecdc4", "#45b7d1", "#f9ca24"], alpha=0.8)
 ax2.set_xlabel("Jour de simulation")
-ax2.set_ylabel("Stock de nourriture (echelle log)")
-ax2.set_title("Meme donnee en echelle logarithmique (meilleure lisibilite)")
-ax2.legend(fontsize=7, loc="upper left")
+ax2.set_ylabel("Composition de l'equipe")
+ax2.set_title("Composition par role (aires empilees)")
+ax2.legend(fontsize=9, loc="upper left")
 ax2.grid(True, alpha=0.3)
 
 fig.tight_layout()
-save_and_show(fig, "09_monte_carlo_nourriture.png")
+save_and_show(fig, "09_evolution_effectifs.png")
+
+# ================================================================
+# 10. LINE CHART - Evolution des modules actifs (Bernoulli conditionnelle)
+# ================================================================
+jours_mod   = [m[0] for m in historique_modules]
+garages_act = [m[1] for m in historique_modules]
+serres_act  = [m[2] for m in historique_modules]
+
+fig, ax = plt.subplots(figsize=(13, 5))
+ax.plot(jours_mod, garages_act, color="#ff9999", linewidth=2, label="Garages actifs")
+ax.plot(jours_mod, serres_act,  color="#66b3ff", linewidth=2, label="Serres actives")
+ax.fill_between(jours_mod, garages_act, alpha=0.2, color="#ff9999")
+ax.fill_between(jours_mod, serres_act,  alpha=0.2, color="#66b3ff")
+ax.set_xlabel("Jour de simulation")
+ax.set_ylabel("Nombre de modules actifs")
+ax.set_title("10. Evolution des modules actifs\n(suppressions selon loi de Bernoulli conditionnelle aux degats cumules)")
+ax.legend(fontsize=9)
+ax.set_ylim(0, max(max(garages_act), max(serres_act)) + 2)
+ax.grid(True, alpha=0.3)
+fig.tight_layout()
+save_and_show(fig, "10_evolution_modules.png")
+
+# ================================================================
+# 12. BAR CHART GROUPE - Activite par serre (plante / recolte / sinistres)
+# ================================================================
+if donnees_serres:
+    serres_tries = sorted(donnees_serres, key=lambda s: s["total_plante"], reverse=True)
+    ids_s  = [f"S{s['id']}" for s in serres_tries]
+    tp     = [s["total_plante"]  for s in serres_tries]
+    tr     = [s["total_recolte"] for s in serres_tries]
+    ns     = [s["nb_sinistres"]  for s in serres_tries]
+    x      = np.arange(len(ids_s))
+    width  = 0.3
+
+    fig, ax1 = plt.subplots(figsize=(13, 6))
+    ax1.bar(x - width, tp, width, label="Total plante",  color="#27ae60", alpha=0.8, edgecolor="black")
+    ax1.bar(x,         tr, width, label="Total recolte", color="#e67e22", alpha=0.8, edgecolor="black")
+    ax1.set_xlabel("Serre")
+    ax1.set_ylabel("Quantite (graines / nourriture)")
+    ax1.set_xticks(x)
+    ax1.set_xticklabels(ids_s, rotation=45, fontsize=8)
+    ax1.grid(True, alpha=0.3, axis="y")
+
+    ax2 = ax1.twinx()
+    ax2.bar(x + width, ns, width, label="Nb sinistres", color="#e74c3c", alpha=0.7, edgecolor="black")
+    ax2.set_ylabel("Nombre de sinistres", color="#e74c3c")
+    ax2.tick_params(axis="y", labelcolor="#e74c3c")
+
+    lines1, labels1 = ax1.get_legend_handles_labels()
+    lines2, labels2 = ax2.get_legend_handles_labels()
+    ax1.legend(lines1 + lines2, labels1 + labels2, fontsize=8, loc="upper right")
+    ax1.set_title("12. Activite par serre : plantations, recoltes et sinistres")
+    fig.tight_layout()
+    save_and_show(fig, "12_performance_serres.png")
+
+# ================================================================
+# 13. BAR CHART - Taux de reussite par type d'operation
+# ================================================================
+succes_par_type  = defaultdict(int)
+echecs_par_type  = defaultdict(int)
+for jour, type_op, ok, details in log_operations:
+    if ok:
+        succes_par_type[type_op] += 1
+    else:
+        echecs_par_type[type_op] += 1
+
+types_ops = sorted(succes_par_type.keys() | echecs_par_type.keys(),
+                   key=lambda t: succes_par_type[t] + echecs_par_type[t], reverse=True)
+totaux    = [succes_par_type[t] + echecs_par_type[t] for t in types_ops]
+taux      = [100 * succes_par_type[t] / tot if tot > 0 else 0
+             for t, tot in zip(types_ops, totaux)]
+
+couleurs = ["#27ae60" if tx >= 95 else "#f39c12" if tx >= 75 else "#e74c3c" for tx in taux]
+
+fig, ax = plt.subplots(figsize=(10, 6))
+bars = ax.barh(types_ops, taux, color=couleurs, edgecolor="black", alpha=0.85)
+ax.axvline(100, color="gray", linestyle="--", alpha=0.4)
+
+for bar, tx, tot in zip(bars, taux, totaux):
+    ax.text(min(tx + 1, 98), bar.get_y() + bar.get_height() / 2,
+            f"{tx:.1f}%  (n={tot})", va="center", fontsize=8)
+
+ax.set_xlabel("Taux de reussite (%)")
+ax.set_title("13. Taux de reussite par type d'operation")
+ax.set_xlim(0, 115)
+ax.grid(True, alpha=0.3, axis="x")
+fig.tight_layout()
+save_and_show(fig, "13_taux_reussite_operations.png")
+
+# ================================================================
+# 14. BOX PLOT - Duree de reparation par technicien (top actifs)
+# ================================================================
+sinistres_repares_tech = [s for s in log_sinistres
+                          if s["dateReparation"] is not None and s["tech_id"] is not None]
+if sinistres_repares_tech:
+    durees_par_tech = defaultdict(list)
+    for s in sinistres_repares_tech:
+        durees_par_tech[s["tech_id"]].append(s["duree"])
+
+    # Garder les 15 techniciens les plus actifs
+    top_techs = sorted(durees_par_tech.items(), key=lambda x: len(x[1]), reverse=True)[:15]
+    labels_tech = [f"T{tid}\n(n={len(d)})" for tid, d in top_techs]
+    data_tech   = [d for _, d in top_techs]
+
+    fig, ax = plt.subplots(figsize=(13, 6))
+    bp = ax.boxplot(data_tech, patch_artist=True, tick_labels=labels_tech)
+    for patch in bp["boxes"]:
+        patch.set_facecolor("#4ecdc4")
+        patch.set_alpha(0.6)
+
+    moy_glob = np.mean([s["duree"] for s in sinistres_repares_tech])
+    ax.axhline(moy_glob, color="red", linestyle="--", linewidth=1.5,
+               label=f"Moyenne globale = {moy_glob:.1f}j")
+
+    ax.set_xlabel("Technicien (n = nb reparations)")
+    ax.set_ylabel("Duree de reparation (jours)")
+    ax.set_title("14. Duree de reparation par technicien (top 15 les plus actifs)")
+    ax.legend(fontsize=9)
+    ax.grid(True, alpha=0.3, axis="y")
+    fig.tight_layout()
+    save_and_show(fig, "14_reparations_par_technicien.png")
 
 print("\n=== Analyses terminees ===")
-print(f"9 graphiques sauvegardes dans le dossier 'graphiques/'")
+print(f"13 graphiques sauvegardes dans le dossier 'graphiques/'")
