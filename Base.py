@@ -45,7 +45,7 @@ class Base:
 
     def getIdMembreValide(self, idMembre: int) -> "MembreEquipage | None":
         for m in self._mesMembres:
-            if m.getId() == idMembre and m.getEtatMembreEquipage() == 1:
+            if m.getId() == idMembre and m.getEtatMembreEquipage() == 1 and not m.estEnExpedition():
                 return m
         return None
 
@@ -109,6 +109,15 @@ class Base:
             if e:
                 return e
         return None
+
+    def getMembres(self) -> list["MembreEquipage"]:
+        return list(self._mesMembres)
+
+    def getGarages(self) -> list["Garage"]:
+        return list(self._mesGarages)
+
+    def getSerres(self) -> list["Serre"]:
+        return list(self._mesSerres)
 
     def ajouterMembre(self, idCmdt: int, idMembre: int, role: str) -> bool:
         if not self.getIdCmdtValide(idCmdt) or self.getIdMembreValide(idMembre) or role not in ROLES_VALIDES:

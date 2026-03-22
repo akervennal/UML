@@ -26,6 +26,9 @@ class Garage(Module):
                 return e
         return None
 
+    def getNbExpeditions(self) -> int:
+        return len(self._mesExpeditions)
+
     def receptionnerExpedition(self, expedition: "Expedition", dateRetour: str, ptDeVieResultant: int) -> bool:
         if expedition.getEtat() != 1:
             return False

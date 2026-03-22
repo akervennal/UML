@@ -1,12 +1,13 @@
 """
 Analyses statistiques et graphiques de la simulation de base martienne.
-Charge les donnees de simulation_data.pkl et genere 9 graphiques.
+Charge les donnees de simulation_data.pkl et genere 17 graphiques.
 """
 import os
 import pickle
 import matplotlib.pyplot as plt
 import numpy as np
 from collections import Counter, defaultdict
+from matplotlib.patches import Patch
 
 # --- Chargement des donnees ---
 with open("simulation_data.pkl", "rb") as f:
@@ -22,6 +23,7 @@ log_recoltes = data["log_recoltes"]
 log_plantations = data["log_plantations"]
 log_consommation = data["log_consommation"]
 log_ravitaillements = data["log_ravitaillements"]
+log_membres = data["log_membres"]
 donnees_membres = data["donnees_membres"]
 donnees_serres = data["donnees_serres"]
 donnees_garages = data["donnees_garages"]
@@ -29,10 +31,20 @@ donnees_garages = data["donnees_garages"]
 # --- Dossier de sortie ---
 os.makedirs("graphiques", exist_ok=True)
 
+NB_GRAPHIQUES = 0
+
 
 def save_and_show(fig, filename):
+    global NB_GRAPHIQUES
+    NB_GRAPHIQUES += 1
     fig.savefig(f"graphiques/{filename}", dpi=150, bbox_inches="tight")
     plt.close(fig)
+
+
+def moving_avg(data, window=30):
+    arr = np.array(data, dtype=float)
+    kernel = np.ones(window) / window
+    return np.convolve(arr, kernel, mode="same")
 
 
 # ================================================================
@@ -43,18 +55,11 @@ graines = [s[1] for s in historique_stocks]
 nourriture = [s[2] for s in historique_stocks]
 pieces = [s[3] for s in historique_stocks]
 
-def moving_avg(data, window=30):
-    arr = np.array(data, dtype=float)
-    kernel = np.ones(window) / window
-    return np.convolve(arr, kernel, mode="same")
-
 fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(13, 8), sharex=True)
 
-# Courbes brutes en fond
 ax1.plot(jours, graines, alpha=0.2, color="tab:blue")
 ax1.plot(jours, nourriture, alpha=0.2, color="tab:orange")
 ax1.plot(jours, pieces, alpha=0.2, color="tab:green")
-# Moyennes mobiles
 ax1.plot(jours, moving_avg(graines), label="Graines (moy. mobile 30j)", color="tab:blue", linewidth=2)
 ax1.plot(jours, moving_avg(nourriture), label="Nourriture (moy. mobile 30j)", color="tab:orange", linewidth=2)
 ax1.plot(jours, moving_avg(pieces), label="Pieces module (moy. mobile 30j)", color="tab:green", linewidth=2)
@@ -64,7 +69,6 @@ ax1.set_title("1. Evolution des stocks au fil du temps")
 ax1.legend(fontsize=8)
 ax1.grid(True, alpha=0.3)
 
-# Sous-graphique : stock nourriture seul avec zone critique
 ax2.fill_between(jours, nourriture, alpha=0.3, color="tab:orange")
 ax2.plot(jours, moving_avg(nourriture), color="tab:orange", linewidth=2, label="Nourriture (moy. mobile)")
 ax2.axhline(y=20, color="red", linestyle="--", alpha=0.7, label="Seuil critique")
@@ -78,7 +82,7 @@ fig.tight_layout()
 save_and_show(fig, "01_evolution_stocks.png")
 
 # ================================================================
-# 2. BAR CHART - Balance nourriture (sans la periode initiale J0-50)
+# 2. BAR CHART - Balance nourriture (hors periode initiale)
 # ================================================================
 periode = 50
 nb_periodes = max(jours) // periode + 1
@@ -102,7 +106,6 @@ for jour, membre_id, nb in log_consommation:
     if idx < nb_periodes:
         consommation_par_periode[idx] += nb
 
-# Exclure la 1ere periode (commande initiale massive qui ecrase l'echelle)
 start = 1
 x = np.arange(start, nb_periodes)
 labels = [f"J{i*periode}-{(i+1)*periode}" for i in range(start, nb_periodes)]
@@ -110,10 +113,9 @@ labels = [f"J{i*periode}-{(i+1)*periode}" for i in range(start, nb_periodes)]
 fig, ax = plt.subplots(figsize=(13, 5))
 width = 0.27
 ax.bar(x - width, production_par_periode[start:], width, label="Production (recoltes)", color="#27ae60", alpha=0.8)
-ax.bar(x, ravitaillement_par_periode[start:], width, label="Ravitaillement (commandes)", color="#3498db", alpha=0.8)
+ax.bar(x, ravitaillement_par_periode[start:], width, label="Ravitaillement d'urgence", color="#3498db", alpha=0.8)
 ax.bar(x + width, consommation_par_periode[start:], width, label="Consommation", color="#e74c3c", alpha=0.8)
 
-# Solde net en ligne
 solde = [p + r - c for p, r, c in zip(production_par_periode[start:],
          ravitaillement_par_periode[start:], consommation_par_periode[start:])]
 ax.plot(x, solde, "ko--", label="Solde net", markersize=4, linewidth=1.5)
@@ -129,37 +131,24 @@ ax.grid(True, alpha=0.3, axis="y")
 save_and_show(fig, "02_balance_nourriture.png")
 
 # ================================================================
-# 3. HISTOGRAM - Distribution des durees d'expedition (avec ecart-type)
+# 3. HISTOGRAM - Distribution des durees d'expedition
 # ================================================================
 if log_expeditions:
     durees = [exp[3] for exp in log_expeditions]
 
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(13, 5))
-
-    # Histogramme
-    n_bins, bins, patches = ax1.hist(durees, bins=15, color="steelblue", edgecolor="black", alpha=0.7)
+    fig, ax = plt.subplots(figsize=(10, 5))
+    n_bins, bins, patches = ax.hist(durees, bins=15, color="steelblue", edgecolor="black", alpha=0.7)
     moy = np.mean(durees)
     med = np.median(durees)
     std = np.std(durees)
-    ax1.axvline(moy, color="red", linestyle="--", linewidth=2, label=f"Moyenne = {moy:.1f}j")
-    ax1.axvline(med, color="orange", linestyle="--", linewidth=2, label=f"Mediane = {med:.1f}j")
-    # Zone ecart-type
-    ax1.axvspan(moy - std, moy + std, color="red", alpha=0.08, label=f"Ecart-type = {std:.1f}j")
-    ax1.set_xlabel("Duree (jours)")
-    ax1.set_ylabel("Nombre d'expeditions")
-    ax1.set_title(f"3. Distribution des durees d'expedition (n={len(durees)})")
-    ax1.legend(fontsize=8)
-    ax1.grid(True, alpha=0.3, axis="y")
-
-    # Box plot
-    bp = ax2.boxplot(durees, vert=True, patch_artist=True)
-    bp["boxes"][0].set_facecolor("steelblue")
-    bp["boxes"][0].set_alpha(0.5)
-    ax2.set_ylabel("Duree (jours)")
-    ax2.set_title("Box plot des durees")
-    ax2.set_xticklabels(["Expeditions"])
-    ax2.grid(True, alpha=0.3, axis="y")
-
+    ax.axvline(moy, color="red", linestyle="--", linewidth=2, label=f"Moyenne = {moy:.1f}j")
+    ax.axvline(med, color="orange", linestyle="--", linewidth=2, label=f"Mediane = {med:.1f}j")
+    ax.axvspan(moy - std, moy + std, color="red", alpha=0.08, label=f"Ecart-type = {std:.1f}j")
+    ax.set_xlabel("Duree (jours)")
+    ax.set_ylabel("Nombre d'expeditions")
+    ax.set_title(f"3. Distribution des durees d'expedition (n={len(durees)})")
+    ax.legend(fontsize=8)
+    ax.grid(True, alpha=0.3, axis="y")
     fig.tight_layout()
     save_and_show(fig, "03_durees_expedition.png")
 
@@ -170,33 +159,11 @@ if log_sinistres:
     nb_sin_garage = sum(1 for s in log_sinistres if s["type"] == "Garage")
     nb_sin_serre = sum(1 for s in log_sinistres if s["type"] == "Serre")
 
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(13, 5))
-
-    # Pie chart
-    ax1.pie([nb_sin_garage, nb_sin_serre],
-            labels=[f"Garage ({nb_sin_garage})", f"Serre ({nb_sin_serre})"],
-            autopct="%1.1f%%", colors=["#ff9999", "#66b3ff"], startangle=90)
-    ax1.set_title("4. Repartition des sinistres par type")
-
-    # Bar chart : nb sinistres par module individuel
-    sinistres_par_module = defaultdict(lambda: {"Garage": 0, "Serre": 0})
-    for s in log_sinistres:
-        key = f"{s['type'][0]}{s['module_id']}"
-        sinistres_par_module[key][s["type"]] += 1
-
-    modules_tries = sorted(sinistres_par_module.items(), key=lambda x: sum(x[1].values()), reverse=True)[:20]
-    noms = [m[0] for m in modules_tries]
-    vals = [sum(m[1].values()) for m in modules_tries]
-    colors = ["#ff9999" if n.startswith("G") else "#66b3ff" for n in noms]
-
-    ax2.bar(range(len(noms)), vals, color=colors, edgecolor="black", alpha=0.7)
-    ax2.set_xticks(range(len(noms)))
-    ax2.set_xticklabels(noms, rotation=45, fontsize=8)
-    ax2.set_xlabel("Module")
-    ax2.set_ylabel("Nombre de sinistres")
-    ax2.set_title("Sinistres par module (top 20)")
-    ax2.grid(True, alpha=0.3, axis="y")
-
+    fig, ax = plt.subplots(figsize=(7, 7))
+    ax.pie([nb_sin_garage, nb_sin_serre],
+           labels=[f"Garage ({nb_sin_garage})", f"Serre ({nb_sin_serre})"],
+           autopct="%1.1f%%", colors=["#ff9999", "#66b3ff"], startangle=90)
+    ax.set_title("4. Repartition des sinistres par type")
     fig.tight_layout()
     save_and_show(fig, "04_sinistres_repartition.png")
 
@@ -209,7 +176,6 @@ if log_sinistres:
     fig, ax = plt.subplots(figsize=(10, 5))
     n_vals, bins, patches = ax.hist(degats_sin, bins=18, color="tomato", edgecolor="black", alpha=0.7)
 
-    # Colorier par zone de gravite
     for patch, left_edge in zip(patches, bins[:-1]):
         if left_edge < 30:
             patch.set_facecolor("#2ecc71")
@@ -219,13 +185,18 @@ if log_sinistres:
             patch.set_facecolor("#e74c3c")
 
     ax.axvline(np.mean(degats_sin), color="blue", linestyle="--", linewidth=2)
+    ax.axvline(bins[-2], color="darkred", linestyle=":", linewidth=2)
+    ax.annotate("Valeurs > 85\ntronquees ici\n(artefact loi expo)",
+                xy=(bins[-2], n_vals[-1]), xytext=(55, n_vals[-1] + 1),
+                arrowprops=dict(arrowstyle="->", color="darkred"),
+                color="darkred", fontsize=8)
 
-    from matplotlib.patches import Patch
     legend_elements = [
         Patch(facecolor="#2ecc71", label=f"Mineur (<30) : {sum(1 for d in degats_sin if d < 30)}"),
         Patch(facecolor="#f39c12", label=f"Modere (30-60) : {sum(1 for d in degats_sin if 30 <= d < 60)}"),
         Patch(facecolor="#e74c3c", label=f"Critique (>60) : {sum(1 for d in degats_sin if d >= 60)}"),
         plt.Line2D([0], [0], color="blue", linestyle="--", label=f"Moyenne = {np.mean(degats_sin):.1f}"),
+        plt.Line2D([0], [0], color="darkred", linestyle=":", label="Seuil de troncature (hi=85)"),
     ]
     ax.legend(handles=legend_elements, fontsize=9)
     ax.set_xlabel("Points de vie perdus (degats)")
@@ -235,70 +206,64 @@ if log_sinistres:
     save_and_show(fig, "05_distribution_degats.png")
 
 # ================================================================
-# 6. BAR CHART - Duree des sinistres avant reparation
+# 6. HISTOGRAM - Duree des sinistres avant reparation
 # ================================================================
 sinistres_repares = [s for s in log_sinistres if s["dateReparation"] is not None]
 if sinistres_repares:
     durees_sin = [s["duree"] for s in sinistres_repares]
 
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(13, 5))
-
-    # Histogramme des durees de sinistre
-    ax1.hist(durees_sin, bins=15, color="mediumpurple", edgecolor="black", alpha=0.7)
+    fig, ax = plt.subplots(figsize=(10, 5))
+    ax.hist(durees_sin, bins=15, color="mediumpurple", edgecolor="black", alpha=0.7)
     moy_sin = np.mean(durees_sin)
     med_sin = np.median(durees_sin)
-    ax1.axvline(moy_sin, color="red", linestyle="--", linewidth=2, label=f"Moyenne = {moy_sin:.1f}j")
-    ax1.axvline(med_sin, color="orange", linestyle="--", linewidth=2, label=f"Mediane = {med_sin:.1f}j")
-    ax1.set_xlabel("Duree avant reparation (jours)")
-    ax1.set_ylabel("Nombre de sinistres")
-    ax1.set_title("6. Duree des sinistres avant reparation")
-    ax1.legend()
-    ax1.grid(True, alpha=0.3, axis="y")
-
-    # Duree par type de module
-    durees_garage = [s["duree"] for s in sinistres_repares if s["type"] == "Garage"]
-    durees_serre = [s["duree"] for s in sinistres_repares if s["type"] == "Serre"]
-    bp = ax2.boxplot([durees_garage, durees_serre], vert=True, patch_artist=True,
-                     tick_labels=["Garage", "Serre"])
-    bp["boxes"][0].set_facecolor("#ff9999")
-    bp["boxes"][0].set_alpha(0.6)
-    bp["boxes"][1].set_facecolor("#66b3ff")
-    bp["boxes"][1].set_alpha(0.6)
-    ax2.set_ylabel("Duree (jours)")
-    ax2.set_title("Comparaison Garage vs Serre")
-    ax2.grid(True, alpha=0.3, axis="y")
-
+    ax.axvline(moy_sin, color="red", linestyle="--", linewidth=2, label=f"Moyenne = {moy_sin:.1f}j")
+    ax.axvline(med_sin, color="orange", linestyle="--", linewidth=2, label=f"Mediane = {med_sin:.1f}j")
+    ax.set_xlabel("Duree avant reparation (jours)")
+    ax.set_ylabel("Nombre de sinistres")
+    ax.set_title("6. Duree des sinistres avant reparation")
+    ax.legend()
+    ax.grid(True, alpha=0.3, axis="y")
     fig.tight_layout()
     save_and_show(fig, "06_duree_sinistres.png")
 
 # ================================================================
-# 7. BAR CHART GROUPE - Effectifs vs charge de travail par role
+# 7. BAR CHART GROUPE - Effectifs vs charge de travail ponderee
 # ================================================================
+POIDS_ACTIVITES = {
+    "sinistre": 1,
+    "exp_lancee": 5,
+    "exp_participee": 8,
+    "exp_receptionnee": 3,
+    "evenement_serre": 2,
+    "commande": 1,
+    "gestion_membre": 1,
+}
+
 roles = [m["role"] for m in donnees_membres if m["etat"] == 1]
 role_counts = Counter(roles)
 
 charge_par_role = defaultdict(int)
 for m in donnees_membres:
     if m["etat"] == 1:
-        total = (m["nb_sinistres"] + m["nb_exp_lancees"] + m["nb_exp_participees"]
-                 + m["nb_exp_receptionnees"] + m["nb_evenements_serre"]
-                 + m["nb_commandes_receptionnees"] + m["nb_membres_ajoutes"]
-                 + m["nb_membres_supprimes"])
-        charge_par_role[m["role"]] += total
+        charge = (m["nb_sinistres"] * POIDS_ACTIVITES["sinistre"]
+                  + m["nb_exp_lancees"] * POIDS_ACTIVITES["exp_lancee"]
+                  + m["nb_exp_participees"] * POIDS_ACTIVITES["exp_participee"]
+                  + m["nb_exp_receptionnees"] * POIDS_ACTIVITES["exp_receptionnee"]
+                  + m["nb_evenements_serre"] * POIDS_ACTIVITES["evenement_serre"]
+                  + m["nb_commandes_receptionnees"] * POIDS_ACTIVITES["commande"]
+                  + (m["nb_membres_ajoutes"] + m["nb_membres_supprimes"]) * POIDS_ACTIVITES["gestion_membre"])
+        charge_par_role[m["role"]] += charge
 
 colors_roles = {"Commandant": "#ff6b6b", "Technicien": "#4ecdc4",
                 "Biologiste": "#45b7d1", "Chercheur": "#f9ca24"}
 
-# Ordre coherent
-role_order = ["Commandant", "Technicien", "Biologiste", "Chercheur"]
-role_order = [r for r in role_order if r in role_counts]
+role_order = [r for r in ["Commandant", "Technicien", "Biologiste", "Chercheur"] if r in role_counts]
 
 effectifs = [role_counts[r] for r in role_order]
 charges = [charge_par_role[r] for r in role_order]
 total_eff = sum(effectifs)
-total_charge = sum(charges)
+total_charge = sum(charges) if sum(charges) > 0 else 1
 
-# Normaliser en pourcentage pour comparer
 pct_effectifs = [e / total_eff * 100 for e in effectifs]
 pct_charges = [c / total_charge * 100 for c in charges]
 
@@ -309,10 +274,9 @@ colors_list = [colors_roles[r] for r in role_order]
 
 bars1 = ax.bar(x - width/2, pct_effectifs, width, label="% des effectifs",
                color=colors_list, alpha=0.6, edgecolor="black")
-bars2 = ax.bar(x + width/2, pct_charges, width, label="% de la charge de travail",
+bars2 = ax.bar(x + width/2, pct_charges, width, label="% de la charge ponderee",
                color=colors_list, alpha=1.0, edgecolor="black")
 
-# Annotations
 for bar, pct, val in zip(bars1, pct_effectifs, effectifs):
     ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 1,
             f"{pct:.0f}%\n({val})", ha="center", va="bottom", fontsize=8)
@@ -321,7 +285,7 @@ for bar, pct, val in zip(bars2, pct_charges, charges):
             f"{pct:.0f}%\n({val})", ha="center", va="bottom", fontsize=8)
 
 ax.set_ylabel("Pourcentage (%)")
-ax.set_title("7. Effectifs vs charge de travail reelle par role")
+ax.set_title("7. Effectifs vs charge de travail ponderee par role")
 ax.set_xticks(x)
 ax.set_xticklabels(role_order, fontsize=10)
 ax.legend(fontsize=9)
@@ -331,9 +295,9 @@ fig.tight_layout()
 save_and_show(fig, "07_repartition_roles.png")
 
 # ================================================================
-# 8. HEATMAP - Matrice de correlation
+# 8. HEATMAP - Matrice de correlation (periodes de 10 jours)
 # ================================================================
-periode_corr = 20
+periode_corr = 10
 nb_p = max(jours) // periode_corr + 1
 
 series = {
@@ -343,7 +307,6 @@ series = {
     "Sinistres": [0.0] * nb_p,
     "Expeditions": [0.0] * nb_p,
     "Recoltes": [0.0] * nb_p,
-    "Consommation": [0.0] * nb_p,
 }
 
 count_stocks = [0] * nb_p
@@ -376,16 +339,11 @@ for jour, serre_id, nb in log_recoltes:
     if idx < nb_p:
         series["Recoltes"][idx] += nb
 
-for jour, mid, nb in log_consommation:
-    idx = jour // periode_corr
-    if idx < nb_p:
-        series["Consommation"][idx] += nb
-
 keys = list(series.keys())
 matrix = np.array([series[k] for k in keys])
 corr = np.corrcoef(matrix)
 
-fig, ax = plt.subplots(figsize=(9, 8))
+fig, ax = plt.subplots(figsize=(8, 7))
 im = ax.imshow(corr, cmap="RdBu_r", vmin=-1, vmax=1)
 ax.set_xticks(range(len(keys)))
 ax.set_yticks(range(len(keys)))
@@ -396,7 +354,7 @@ for i in range(len(keys)):
         ax.text(j, i, f"{corr[i, j]:.2f}", ha="center", va="center",
                 color="white" if abs(corr[i, j]) > 0.5 else "black", fontsize=9)
 fig.colorbar(im, shrink=0.8)
-ax.set_title("8. Matrice de correlation entre variables cles")
+ax.set_title(f"8. Matrice de correlation (periodes de {periode_corr}j, n={nb_p})")
 fig.tight_layout()
 save_and_show(fig, "08_heatmap_correlation.png")
 
@@ -411,7 +369,6 @@ cher_eff   = [e[4] for e in historique_effectifs]
 
 fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(13, 8), sharex=True)
 
-# Haut : lignes par role + total
 ax1.plot(jours_eff, total_eff, color="black", linewidth=2.5, label="Total")
 ax1.plot(jours_eff, tech_eff,  color="#4ecdc4", linewidth=1.5, label="Techniciens")
 ax1.plot(jours_eff, bio_eff,   color="#45b7d1", linewidth=1.5, label="Biologistes")
@@ -421,7 +378,6 @@ ax1.set_title("9. Evolution des effectifs au fil du temps")
 ax1.legend(fontsize=9)
 ax1.grid(True, alpha=0.3)
 
-# Bas : aires empilees pour voir la composition
 ax2.stackplot(jours_eff, tech_eff, bio_eff, cher_eff,
               labels=["Techniciens", "Biologistes", "Chercheurs"],
               colors=["#4ecdc4", "#45b7d1", "#f9ca24"], alpha=0.8)
@@ -435,7 +391,7 @@ fig.tight_layout()
 save_and_show(fig, "09_evolution_effectifs.png")
 
 # ================================================================
-# 10. LINE CHART - Evolution des modules actifs (Bernoulli conditionnelle)
+# 10. LINE CHART - Evolution des modules actifs
 # ================================================================
 jours_mod   = [m[0] for m in historique_modules]
 garages_act = [m[1] for m in historique_modules]
@@ -454,6 +410,73 @@ ax.set_ylim(0, max(max(garages_act), max(serres_act)) + 2)
 ax.grid(True, alpha=0.3)
 fig.tight_layout()
 save_and_show(fig, "10_evolution_modules.png")
+
+# ================================================================
+# 11. LINE CHART - Analyse temporelle des sinistres
+# ================================================================
+if log_sinistres:
+    jours_sin_garage = sorted([s["jour_creation"] for s in log_sinistres if s["type"] == "Garage"])
+    jours_sin_serre = sorted([s["jour_creation"] for s in log_sinistres if s["type"] == "Serre"])
+
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(13, 8), sharex=True)
+
+    # Cumul des sinistres
+    if jours_sin_garage:
+        ax1.step(jours_sin_garage, range(1, len(jours_sin_garage) + 1),
+                 where="post", color="#ff9999", linewidth=2, label=f"Garages ({len(jours_sin_garage)})")
+    if jours_sin_serre:
+        ax1.step(jours_sin_serre, range(1, len(jours_sin_serre) + 1),
+                 where="post", color="#66b3ff", linewidth=2, label=f"Serres ({len(jours_sin_serre)})")
+    ax1.set_ylabel("Sinistres cumules")
+    ax1.set_title("11. Evolution temporelle des sinistres")
+    ax1.legend(fontsize=9)
+    ax1.grid(True, alpha=0.3)
+
+    # Backlog de sinistres non repares (approche evenementielle)
+    events = []
+    for s in log_sinistres:
+        events.append((s["jour_creation"], 1))
+        if s["duree"] is not None:
+            events.append((s["jour_creation"] + s["duree"], -1))
+    events.sort()
+
+    max_jour = max(jours) if jours else 0
+    backlog_jours = [0]
+    backlog_vals = [0]
+    current = 0
+    for jour_ev, delta in events:
+        if jour_ev <= max_jour:
+            current += delta
+            backlog_jours.append(jour_ev)
+            backlog_vals.append(current)
+    backlog_jours.append(max_jour)
+    backlog_vals.append(current)
+
+    ax2.fill_between(backlog_jours, backlog_vals, alpha=0.4, color="tomato", step="post")
+    ax2.step(backlog_jours, backlog_vals, where="post", color="tomato", linewidth=1.5,
+             label="Sinistres non repares")
+    ax2.set_xlabel("Jour de simulation")
+    ax2.set_ylabel("Sinistres non repares", color="tomato")
+    ax2.tick_params(axis="y", labelcolor="tomato")
+    ax2.set_title("Backlog de sinistres vs stock de pieces module")
+    ax2.grid(True, alpha=0.3)
+
+    # Stock de pieces module (axe secondaire)
+    pieces_stock = [s[3] for s in historique_stocks]
+    jours_stock = [s[0] for s in historique_stocks]
+    ax2_pieces = ax2.twinx()
+    ax2_pieces.plot(jours_stock, moving_avg(pieces_stock), color="tab:green",
+                    linewidth=2, alpha=0.8, label="Stock pieces (moy. mobile)")
+    ax2_pieces.plot(jours_stock, pieces_stock, color="tab:green", alpha=0.15)
+    ax2_pieces.set_ylabel("Stock pieces module", color="tab:green")
+    ax2_pieces.tick_params(axis="y", labelcolor="tab:green")
+
+    lines1, labels1 = ax2.get_legend_handles_labels()
+    lines2, labels2 = ax2_pieces.get_legend_handles_labels()
+    ax2.legend(lines1 + lines2, labels1 + labels2, fontsize=8, loc="upper left")
+
+    fig.tight_layout()
+    save_and_show(fig, "11_evolution_sinistres.png")
 
 # ================================================================
 # 12. BAR CHART GROUPE - Activite par serre (plante / recolte / sinistres)
@@ -523,37 +546,144 @@ fig.tight_layout()
 save_and_show(fig, "13_taux_reussite_operations.png")
 
 # ================================================================
-# 14. BOX PLOT - Duree de reparation par technicien (top actifs)
+# 14. BAR CHART - Reparations par technicien (top 15)
 # ================================================================
-sinistres_repares_tech = [s for s in log_sinistres
-                          if s["dateReparation"] is not None and s["tech_id"] is not None]
-if sinistres_repares_tech:
-    durees_par_tech = defaultdict(list)
-    for s in sinistres_repares_tech:
-        durees_par_tech[s["tech_id"]].append(s["duree"])
+if sinistres_repares:
+    reparations_par_tech = Counter(s["tech_id"] for s in sinistres_repares if s["tech_id"] is not None)
+    top_techs = reparations_par_tech.most_common(15)
 
-    # Garder les 15 techniciens les plus actifs
-    top_techs = sorted(durees_par_tech.items(), key=lambda x: len(x[1]), reverse=True)[:15]
-    labels_tech = [f"T{tid}\n(n={len(d)})" for tid, d in top_techs]
-    data_tech   = [d for _, d in top_techs]
+    if top_techs:
+        labels_tech = [f"T{tid}" for tid, _ in top_techs]
+        counts_tech = [c for _, c in top_techs]
+        moy_rep = np.mean(list(reparations_par_tech.values()))
+
+        fig, ax = plt.subplots(figsize=(12, 5))
+        bars = ax.bar(labels_tech, counts_tech, color="#4ecdc4", edgecolor="black", alpha=0.8)
+        ax.axhline(moy_rep, color="red", linestyle="--", linewidth=2,
+                   label=f"Moyenne = {moy_rep:.1f} rep/tech")
+
+        for bar, c in zip(bars, counts_tech):
+            ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.3,
+                    str(c), ha="center", va="bottom", fontsize=8)
+
+        ax.set_xlabel("Technicien")
+        ax.set_ylabel("Nombre de reparations")
+        ax.set_title(f"14. Top 15 techniciens par nombre de reparations (total={sum(counts_tech)})")
+        ax.legend(fontsize=9)
+        ax.grid(True, alpha=0.3, axis="y")
+        fig.tight_layout()
+        save_and_show(fig, "14_reparations_par_technicien.png")
+
+# ================================================================
+# 15. BAR CHART - Productivite par serre (rendement recolte / plantation)
+# ================================================================
+if donnees_serres:
+    serres_productives = [s for s in donnees_serres if s["total_plante"] > 0]
+    if serres_productives:
+        serres_sorted = sorted(serres_productives,
+                               key=lambda s: s["total_recolte"] / s["total_plante"], reverse=True)
+        ids_p = [f"S{s['id']}" for s in serres_sorted]
+        rendements = [s["total_recolte"] / s["total_plante"] * 100 for s in serres_sorted]
+        moy_rend = np.mean(rendements)
+
+        couleurs_rend = ["#27ae60" if r >= 80 else "#f39c12" if r >= 50 else "#e74c3c" for r in rendements]
+
+        fig, ax = plt.subplots(figsize=(13, 6))
+        bars = ax.bar(range(len(ids_p)), rendements, color=couleurs_rend, edgecolor="black", alpha=0.8)
+        ax.axhline(100, color="blue", linestyle="--", alpha=0.5, label="100% rendement")
+        ax.axhline(moy_rend, color="red", linestyle="--", alpha=0.7,
+                   label=f"Moyenne = {moy_rend:.1f}%")
+
+        legend_elements = [
+            Patch(facecolor="#27ae60", label=f"Bon (>=80%) : {sum(1 for r in rendements if r >= 80)}"),
+            Patch(facecolor="#f39c12", label=f"Moyen (50-80%) : {sum(1 for r in rendements if 50 <= r < 80)}"),
+            Patch(facecolor="#e74c3c", label=f"Faible (<50%) : {sum(1 for r in rendements if r < 50)}"),
+            plt.Line2D([0], [0], color="red", linestyle="--", label=f"Moyenne = {moy_rend:.1f}%"),
+        ]
+        ax.legend(handles=legend_elements, fontsize=9)
+        ax.set_xlabel("Serre")
+        ax.set_ylabel("Rendement (recolte / plantation) %")
+        ax.set_title("15. Productivite par serre : rendement recolte / plantation")
+        ax.set_xticks(range(len(ids_p)))
+        ax.set_xticklabels(ids_p, rotation=45, fontsize=8)
+        ax.grid(True, alpha=0.3, axis="y")
+        fig.tight_layout()
+        save_and_show(fig, "15_productivite_serres.png")
+
+# ================================================================
+# 16. BAR CHART - Turnover par role (ajouts vs departs)
+# ================================================================
+if log_membres:
+    roles_track = ["Technicien", "Biologiste", "Chercheur"]
+    colors_attr = {"Technicien": "#4ecdc4", "Biologiste": "#45b7d1", "Chercheur": "#f9ca24"}
+
+    periode_attr = 100
+    max_jour_m = max(e[0] for e in log_membres)
+    nb_p_attr = max_jour_m // periode_attr + 1
+
+    ajouts = {r: [0] * nb_p_attr for r in roles_track}
+    suppr = {r: [0] * nb_p_attr for r in roles_track}
+
+    for jour_m, action, mid, role in log_membres:
+        if role in roles_track:
+            idx = min(jour_m // periode_attr, nb_p_attr - 1)
+            if action == "ajout":
+                ajouts[role][idx] += 1
+            elif action == "suppression":
+                suppr[role][idx] += 1
+
+    x = np.arange(nb_p_attr)
+    labels_attr = [f"J{i*periode_attr}-{(i+1)*periode_attr}" for i in range(nb_p_attr)]
+    width_attr = 0.25
 
     fig, ax = plt.subplots(figsize=(13, 6))
-    bp = ax.boxplot(data_tech, patch_artist=True, tick_labels=labels_tech)
-    for patch in bp["boxes"]:
-        patch.set_facecolor("#4ecdc4")
-        patch.set_alpha(0.6)
+    for i, role in enumerate(roles_track):
+        ax.bar(x + i * width_attr, ajouts[role], width_attr,
+               color=colors_attr[role], alpha=0.9, edgecolor="black",
+               label=f"{role} (ajouts)")
+        ax.bar(x + i * width_attr, [-s for s in suppr[role]], width_attr,
+               color=colors_attr[role], alpha=0.4, edgecolor="black",
+               label=f"{role} (departs)")
 
-    moy_glob = np.mean([s["duree"] for s in sinistres_repares_tech])
-    ax.axhline(moy_glob, color="red", linestyle="--", linewidth=1.5,
-               label=f"Moyenne globale = {moy_glob:.1f}j")
-
-    ax.set_xlabel("Technicien (n = nb reparations)")
-    ax.set_ylabel("Duree de reparation (jours)")
-    ax.set_title("14. Duree de reparation par technicien (top 15 les plus actifs)")
-    ax.legend(fontsize=9)
+    ax.axhline(0, color="black", linewidth=0.5)
+    ax.set_xlabel("Periode")
+    ax.set_ylabel("Nombre de membres (+ ajouts / - departs)")
+    ax.set_title("16. Turnover par role : ajouts vs departs par periode")
+    ax.set_xticks(x + width_attr)
+    ax.set_xticklabels(labels_attr, rotation=45, ha="right", fontsize=7)
+    ax.legend(fontsize=7, ncol=3, loc="upper right")
     ax.grid(True, alpha=0.3, axis="y")
     fig.tight_layout()
-    save_and_show(fig, "14_reparations_par_technicien.png")
+    save_and_show(fig, "16_turnover_par_role.png")
 
-print("\n=== Analyses terminees ===")
-print(f"13 graphiques sauvegardes dans le dossier 'graphiques/'")
+# ================================================================
+# 17. BAR CHART - Expeditions par garage
+# ================================================================
+if log_expeditions:
+    garage_exp_count = Counter(exp[5] for exp in log_expeditions)
+    garages_sorted = garage_exp_count.most_common(20)
+
+    if garages_sorted:
+        labels_g = [f"G{gid}" for gid, _ in garages_sorted]
+        counts_g = [c for _, c in garages_sorted]
+        moy_exp = np.mean(list(garage_exp_count.values()))
+
+        fig, ax = plt.subplots(figsize=(12, 5))
+        ax.bar(labels_g, counts_g, color="steelblue", edgecolor="black", alpha=0.8)
+        ax.axhline(moy_exp, color="red", linestyle="--", linewidth=2,
+                   label=f"Moyenne = {moy_exp:.1f} exp/garage")
+
+        for i, (lbl, c) in enumerate(zip(labels_g, counts_g)):
+            ax.text(i, c + 0.2, str(c), ha="center", va="bottom", fontsize=8)
+
+        ax.set_xlabel("Garage")
+        ax.set_ylabel("Nombre d'expeditions terminees")
+        ax.set_title(f"17. Expeditions par garage (n={sum(counts_g)} expeditions)")
+        ax.legend(fontsize=9)
+        ax.grid(True, alpha=0.3, axis="y")
+        fig.tight_layout()
+        save_and_show(fig, "17_expeditions_par_garage.png")
+
+
+print(f"\n=== Analyses terminees ===")
+print(f"{NB_GRAPHIQUES} graphiques sauvegardes dans le dossier 'graphiques/'")

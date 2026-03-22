@@ -24,6 +24,15 @@ class Serre(Module):
         self._nbPlantSerre = nb
         return True
 
+    def getTotalPlante(self) -> int:
+        return sum(e.getNbGraine() for e in self._mesEvenements if e.getNbGraine() > 0)
+
+    def getTotalRecolte(self) -> int:
+        return sum(-e.getNbGraine() for e in self._mesEvenements if e.getNbGraine() < 0)
+
+    def getNbEvenements(self) -> int:
+        return len(self._mesEvenements)
+
     def creerEvenementSerre(self, biologiste: "MembreEquipage", idEvenementSerre: int, nbGraine: int) -> None:
         EvenementSerre(idEvenementSerre, nbGraine, biologiste, self)
 

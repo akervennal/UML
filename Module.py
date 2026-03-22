@@ -33,6 +33,12 @@ class Module:
                 return s
         return None
 
+    def getNbSinistres(self) -> int:
+        return len(self._mesSinistres)
+
+    def getDegatsCumules(self) -> int:
+        return sum(100 - s.getPtDeVieResultant() for s in self._mesSinistres)
+
     def lierSinistre(self, sinistre: "Sinistre") -> bool:
         self._mesSinistres.append(sinistre)
         return True

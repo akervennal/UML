@@ -65,5 +65,20 @@ class MembreEquipage:
         self._mesEvenementsSerre.append(evenement)
         return True
 
+    def getNbSinistres(self) -> int:
+        return len(self._mesSinistres)
+
+    def getNbExpeditionsLancees(self) -> int:
+        return len(self._mesExpeditionsLancees)
+
+    def getNbExpeditionsParticipees(self) -> int:
+        return len(self._mesExpeditionsParticipees)
+
+    def getNbExpeditionsReceptionnees(self) -> int:
+        return len(self._mesExpeditionsReceptionnees)
+
+    def getNbEvenementsSerre(self) -> int:
+        return len(self._mesEvenementsSerre)
+
     def donnee(self):
         return (self._idMembre, self._roleMembre, self._etat)
