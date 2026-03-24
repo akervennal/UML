@@ -6,6 +6,7 @@ if TYPE_CHECKING:
 
 
 class Expedition:
+    # attributs
     _idExpedition: int
     _dateLancement: str
     _dateRetour: str
@@ -39,6 +40,8 @@ class Expedition:
         return self._etat
 
     def setEtat(self, etat: int) -> bool:
+        if etat not in (0, 1):
+            return False
         self._etat = etat
         return True
 
@@ -57,6 +60,6 @@ class Expedition:
         self._monChercheurRetour = membre
         return True
 
-    def donnee(self):
+    def donnee(self) -> tuple:
         return (self._idExpedition, self._monChercheurLancement.getId(),
                 self._dateLancement, self._etat)

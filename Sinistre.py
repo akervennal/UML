@@ -6,10 +6,11 @@ if TYPE_CHECKING:
 
 
 class Sinistre:
+    # attributs
     _idSinistre: int
     _dateCreation: str
     _ptDeVieResultant: int
-    _etat: int          # 0 = en cours, 1 = réparé
+    _etat: int          # 1 = en cours, 0 = réparé
     _dateReparation: str
     _monMembreAuteur: "MembreEquipage"
     _monTechnicien: "MembreEquipage"
@@ -20,7 +21,7 @@ class Sinistre:
         self._idSinistre = idSinistre
         self._dateCreation = dateCreation
         self._ptDeVieResultant = ptDeVieResultant
-        self._etat = 0
+        self._etat = 1
         self._dateReparation = None
         self._monMembreAuteur = membre
         self._monTechnicien = None
@@ -38,6 +39,8 @@ class Sinistre:
         return self._etat
 
     def setEtat(self, etat: int) -> bool:
+        if etat not in (0, 1):
+            return False
         self._etat = etat
         return True
 
@@ -49,6 +52,6 @@ class Sinistre:
         self._monTechnicien = technicien
         return True
 
-    def donnee(self):
+    def donnee(self) -> tuple:
         return (self._idSinistre, self._dateCreation, self._monMembreAuteur.getId(),
                 self._ptDeVieResultant, self._etat)

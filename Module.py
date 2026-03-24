@@ -6,6 +6,7 @@ if TYPE_CHECKING:
 
 
 class Module:
+    # attributs
     _idModule: int
     _etat: int          # 1 = actif, 0 = supprimé/masqué
     _monSystem: "Base"
@@ -24,12 +25,14 @@ class Module:
         return self._etat
 
     def setEtat(self, etat: int) -> bool:
+        if etat not in (0, 1):
+            return False
         self._etat = etat
         return True
 
-    def getSinistreEnCours(self) -> "Sinistre":
+    def getSinistreEnCours(self) -> "Sinistre | None":
         for s in self._mesSinistres:
-            if s.getEtat() == 0:
+            if s.getEtat() == 1:
                 return s
         return None
 

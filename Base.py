@@ -24,6 +24,7 @@ ROLE_CHERCHEUR  = "Chercheur"
 
 
 class Base:
+    # attributs
     _nbGraineStock: int
     _nbNourritureStock: int
     _nbPieceModuleStock: int
@@ -42,6 +43,12 @@ class Base:
         self._mesSerres = []
         self._mesSinistres = []
         self._mesMembres.append(MembreEquipage(idCmdt, ROLE_COMMANDANT))
+
+    def trouverMembreParId(self, idMembre: int) -> "MembreEquipage | None":
+        for m in self._mesMembres:
+            if m.getId() == idMembre and m.getEtatMembreEquipage() == 1:
+                return m
+        return None
 
     def getIdMembreValide(self, idMembre: int) -> "MembreEquipage | None":
         for m in self._mesMembres:
@@ -120,7 +127,7 @@ class Base:
         return list(self._mesSerres)
 
     def ajouterMembre(self, idCmdt: int, idMembre: int, role: str) -> bool:
-        if not self.getIdCmdtValide(idCmdt) or self.getIdMembreValide(idMembre) or role not in ROLES_VALIDES:
+        if not self.getIdCmdtValide(idCmdt) or self.trouverMembreParId(idMembre) or role not in ROLES_VALIDES:
             return False
         self._mesMembres.append(MembreEquipage(idMembre, role))
         return True
@@ -234,15 +241,15 @@ class Base:
         if self._nbPieceModuleStock < coutReparation:
             return False
         self._nbPieceModuleStock -= coutReparation
-        sinistreEnCours.setEtat(1)
+        sinistreEnCours.setEtat(0)
         sinistreEnCours.setDateReparation(dateReparation)
         sinistreEnCours.lierTechnicien(tech)
         tech.lierSinistre(sinistreEnCours)
         return True
 
-    def reparerSerre(self, idTech: int, idModule: int, dateReparation: str) -> bool:
+    def reparerSerre(self, idTech: int, idSerre: int, dateReparation: str) -> bool:
         tech = self.getIdTechValide(idTech)
-        serre = self.getIdSerreValide(idModule)
+        serre = self.getIdSerreValide(idSerre)
         if not tech or not serre:
             return False
         sinistreEnCours = serre.getSinistreEnCours()
@@ -252,13 +259,15 @@ class Base:
         if self._nbPieceModuleStock < coutReparation:
             return False
         self._nbPieceModuleStock -= coutReparation
-        sinistreEnCours.setEtat(1)
+        sinistreEnCours.setEtat(0)
         sinistreEnCours.setDateReparation(dateReparation)
         sinistreEnCours.lierTechnicien(tech)
         tech.lierSinistre(sinistreEnCours)
         return True
 
     def supprimerMembre(self, idCmdt: int, idMembre: int) -> bool:
+        if idCmdt == idMembre:
+            return False
         cmdt = self.getIdCmdtValide(idCmdt)
         membre = self.getIdMembreValide(idMembre)
         if not cmdt or not membre:
@@ -272,6 +281,8 @@ class Base:
         garage = self.getIdGarageValide(idGarage)
         if not tech or not garage:
             return False
+        if garage.getExpeditionEnCours() or garage.getSinistreEnCours():
+            return False
         self._nbPieceModuleStock += RECYCLAGE_MODULE
         garage.setEtat(0)
         return True
@@ -281,11 +292,13 @@ class Base:
         serre = self.getIdSerreValide(idSerre)
         if not tech or not serre:
             return False
+        if serre.getSinistreEnCours():
+            return False
         self._nbPieceModuleStock += RECYCLAGE_MODULE
         serre.setEtat(0)
         return True
 
-    def donneeStocks(self):
+    def donneeStocks(self) -> dict:
         return {
             "graines": self._nbGraineStock,
             "nourriture": self._nbNourritureStock,

@@ -7,6 +7,7 @@ if TYPE_CHECKING:
 
 
 class MembreEquipage:
+    # attributs
     _idMembre: int
     _roleMembre: str
     _etat: int
@@ -36,10 +37,13 @@ class MembreEquipage:
         return self._etat
 
     def setEtat(self, etat: int) -> bool:
+        if etat not in (0, 1):
+            return False
         self._etat = etat
         return True
 
     def estEnExpedition(self) -> bool:
+        # Seul le participant est considere "en expedition", pas le lanceur
         for e in self._mesExpeditionsParticipees:
             if e.getEtat() == 1:
                 return True
@@ -80,5 +84,5 @@ class MembreEquipage:
     def getNbEvenementsSerre(self) -> int:
         return len(self._mesEvenementsSerre)
 
-    def donnee(self):
+    def donnee(self) -> tuple:
         return (self._idMembre, self._roleMembre, self._etat)

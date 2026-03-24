@@ -9,6 +9,7 @@ if TYPE_CHECKING:
 
 
 class Serre(Module):
+    # attributs
     _nbPlantSerre: int
     _mesEvenements: list["EvenementSerre"]
 
@@ -21,6 +22,8 @@ class Serre(Module):
         return self._nbPlantSerre
 
     def setNbPlantSerre(self, nb: int) -> bool:
+        if nb < 0:
+            return False
         self._nbPlantSerre = nb
         return True
 
@@ -46,5 +49,5 @@ class Serre(Module):
                 return e
         return None
 
-    def donnee(self):
+    def donnee(self) -> tuple:
         return (self._idModule, self._nbPlantSerre, self._etat)

@@ -126,6 +126,9 @@ def test_uc4_declarer_sinistre_garage_sinistre_en_cours(base):
 def test_uc4_declarer_sinistre_garage_id_doublon(base):
     assert base.declarerSinistreGarage(1, 200, 10, "2025-01-01", 40) is False  # id sinistre doublon
 
+def test_supprimer_garage_sinistre_en_cours(base):
+    assert base.supprimerGarage(1, 10) is False  # sinistre en cours sur garage 10
+
 
 # ---------------------------------------------------------------------------
 # UC5 — Déclarer un sinistre Serre
@@ -136,6 +139,9 @@ def test_uc5_declarer_sinistre_serre(base):
 
 def test_uc5_declarer_sinistre_serre_en_cours(base):
     assert base.declarerSinistreSerre(2, 301, 11, "2025-01-02", 20) is False  # sinistre déjà en cours
+
+def test_supprimer_serre_sinistre_en_cours(base):
+    assert base.supprimerSerre(1, 11) is False  # sinistre en cours sur serre 11
 
 
 # ---------------------------------------------------------------------------
@@ -168,6 +174,12 @@ def test_uc6_lancer_expedition_participant_en_expedition(base):
 def test_uc6_lancer_expedition_ids_non_distincts(base):
     assert base.lancerExpedition(3, 3, 401, 10, "2025-03-02") is False  # lanceur == participant
 
+def test_ajouter_membre_doublon_en_expedition(base):
+    assert base.ajouterMembre(0, 4, "Chercheur") is False  # 4 existe mais est en expedition
+
+def test_supprimer_garage_expedition_en_cours(base):
+    assert base.supprimerGarage(1, 10) is False  # expedition en cours sur garage 10
+
 
 # ---------------------------------------------------------------------------
 # UC8 — Réceptionner une expédition
@@ -191,6 +203,9 @@ def test_uc14_supprimer_membre(base):
 
 def test_uc14_supprimer_membre_deja_supprime(base):
     assert base.supprimerMembre(0, 2) is False  # déjà supprimé
+
+def test_uc14_supprimer_commandant_lui_meme(base):
+    assert base.supprimerMembre(0, 0) is False  # commandant ne peut pas se supprimer
 
 
 # ---------------------------------------------------------------------------

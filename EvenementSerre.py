@@ -6,6 +6,7 @@ if TYPE_CHECKING:
 
 
 class EvenementSerre:
+    # attributs
     _idEvenementSerre: int
     _nbGraine: int      # positif = plantation, négatif = récolte
     _monBiologiste: "MembreEquipage"
@@ -26,5 +27,5 @@ class EvenementSerre:
     def getNbGraine(self) -> int:
         return self._nbGraine
 
-    def donnee(self):
+    def donnee(self) -> tuple:
         return (self._idEvenementSerre, self._nbGraine)

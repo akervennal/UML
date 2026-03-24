@@ -8,6 +8,7 @@ if TYPE_CHECKING:
 
 
 class Garage(Module):
+    # attributs
     _mesExpeditions: list["Expedition"]
 
     def __init__(self, idGarage: int, base: "Base"):
@@ -41,5 +42,5 @@ class Garage(Module):
         self._mesExpeditions.append(expedition)
         return True
 
-    def donnee(self):
+    def donnee(self) -> tuple:
         return (self._idModule, self._etat)
