@@ -216,11 +216,11 @@ def main():
             serres_choisies = random.sample(serres_ids, min(nb_serres_rec, len(serres_ids)))
             for serre in serres_choisies:
                 eid = next_id(ids, "evenement")
-                serre_obj = base.getIdSerreValide(serre)
+                serre_obj = base.getSerre(serre)
                 nb_avant = serre_obj.getNbPlantSerre() if serre_obj else 0
                 ok = base.recolterPlantation(bio, serre, eid)
                 if ok:
-                    serre_obj = base.getIdSerreValide(serre)
+                    serre_obj = base.getSerre(serre)
                     nb_apres = serre_obj.getNbPlantSerre() if serre_obj else 0
                     nourriture_recoltee = nb_avant - nb_apres
                     log_recoltes.append((jour, serre, nourriture_recoltee))

@@ -21,7 +21,7 @@ class Garage(Module):
                 return e
         return None
 
-    def getIdExpeditionValide(self, idExpedition: int) -> "Expedition | None":
+    def getExpedition(self, idExpedition: int) -> "Expedition | None":
         for e in self._mesExpeditions:
             if e.getId() == idExpedition:
                 return e
