@@ -58,13 +58,10 @@ def main():
 
     # --- Listes pour collecter les donnees ---
     historique_stocks = []
-    historique_effectifs = []
-    historique_modules = []
     log_operations = []
     log_expeditions = []
     log_sinistres = []
     log_recoltes = []
-    log_plantations = []
     log_consommation = []
     log_membres = []
     log_ravitaillements = []
@@ -204,7 +201,6 @@ def main():
                 eid = next_id(ids, "evenement")
                 ok = base.planterGraines(serre, bio, nb_graines, eid)
                 if ok:
-                    log_plantations.append((jour, serre, nb_graines))
                     log_operations.append((jour, "plantation", True, f"serre={serre}, graines={nb_graines}"))
                 else:
                     log_operations.append((jour, "plantation", False, f"serre={serre}, graines={nb_graines}"))
@@ -349,17 +345,9 @@ def main():
                     else:
                         log_operations.append((jour, "suppression_serre", False, f"serre={s_id}"))
 
-        # --- Snapshot des stocks et des effectifs ---
+        # --- Snapshot des stocks ---
         stocks = base.donneeStocks()
         historique_stocks.append((jour, stocks["graines"], stocks["nourriture"], stocks["piecesModule"]))
-        historique_effectifs.append((
-            jour,
-            1 + len(techniciens) + len(biologistes) + len(chercheurs),
-            len(techniciens),
-            len(biologistes),
-            len(chercheurs),
-        ))
-        historique_modules.append((jour, len(garages_ids), len(serres_ids)))
 
     # ================================================================
     # PHASE 3 : Collecte des donnees finales via getters publics
@@ -381,46 +369,19 @@ def main():
             "nb_membres_supprimes": sum(1 for l in log_membres if l[1] == "suppression") if is_cmdt else 0,
         })
 
-    donnees_serres = []
-    for s in base.getSerres():
-        donnees_serres.append({
-            "id": s.getId(),
-            "etat": s.getEtat(),
-            "plantes_actuelles": s.getNbPlantSerre(),
-            "total_plante": s.getTotalPlante(),
-            "total_recolte": s.getTotalRecolte(),
-            "nb_evenements": s.getNbEvenements(),
-            "nb_sinistres": s.getNbSinistres(),
-        })
-
-    donnees_garages = []
-    for g in base.getGarages():
-        donnees_garages.append({
-            "id": g.getId(),
-            "etat": g.getEtat(),
-            "nb_expeditions": g.getNbExpeditions(),
-            "nb_sinistres": g.getNbSinistres(),
-            "degats_cumules": g.getDegatsCumules(),
-        })
-
     # ================================================================
     # Export pickle (pour analyse_stats.py)
     # ================================================================
     data = {
         "historique_stocks": historique_stocks,
-        "historique_effectifs": historique_effectifs,
-        "historique_modules": historique_modules,
         "log_operations": log_operations,
         "log_expeditions": log_expeditions,
         "log_sinistres": log_sinistres,
         "log_recoltes": log_recoltes,
-        "log_plantations": log_plantations,
         "log_consommation": log_consommation,
         "log_ravitaillements": log_ravitaillements,
         "log_membres": log_membres,
         "donnees_membres": donnees_membres,
-        "donnees_serres": donnees_serres,
-        "donnees_garages": donnees_garages,
     }
 
     with open("simulation_data.pkl", "wb") as f:
@@ -443,32 +404,19 @@ def main():
     membres_headers = ["id", "role", "etat", "nb_sinistres", "nb_exp_lancees",
                         "nb_exp_participees", "nb_exp_receptionnees", "nb_evenements_serre",
                         "nb_commandes_receptionnees", "nb_membres_ajoutes", "nb_membres_supprimes"]
-    membres_keys = membres_headers
-    membres_rows = [[m[k] for k in membres_keys] for m in donnees_membres]
-
-    serres_headers = ["id", "etat", "plantes_actuelles", "total_plante", "total_recolte",
-                      "nb_evenements", "nb_sinistres"]
-    serres_rows = [[s[k] for k in serres_headers] for s in donnees_serres]
-
-    garages_headers = ["id", "etat", "nb_expeditions", "nb_sinistres", "degats_cumules"]
-    garages_rows = [[g[k] for k in garages_headers] for g in donnees_garages]
+    membres_rows = [[m[k] for k in membres_headers] for m in donnees_membres]
 
     csv_exports = [
-        ("historique_modules",    ["jour", "garages_actifs", "serres_actives"],                         historique_modules),
-        ("historique_effectifs",  ["jour", "total", "techniciens", "biologistes", "chercheurs"],        historique_effectifs),
         ("historique_stocks",     ["jour", "graines", "nourriture", "pieces_module"],                   historique_stocks),
         ("log_operations",        ["jour", "type_operation", "succes", "details"],                      log_operations),
         ("log_expeditions",       ["id", "date_lancement", "date_retour", "duree_jours",
                                    "pt_de_vie_resultant", "garage_id"],                                 log_expeditions),
         ("log_sinistres",         sinistres_headers,                                                    sinistres_rows),
         ("log_recoltes",          ["jour", "serre_id", "nourriture_produite"],                          log_recoltes),
-        ("log_plantations",       ["jour", "serre_id", "nb_graines"],                                   log_plantations),
         ("log_consommation",      ["jour", "membre_id", "nb_nourriture"],                               log_consommation),
         ("log_ravitaillements",   ["jour", "graines", "nourriture", "pieces"],                          log_ravitaillements),
         ("log_membres",           ["jour", "action", "membre_id", "role"],                              log_membres),
         ("donnees_membres",       membres_headers,                                                      membres_rows),
-        ("donnees_serres",        serres_headers,                                                       serres_rows),
-        ("donnees_garages",       garages_headers,                                                      garages_rows),
     ]
 
     for name, headers, rows in csv_exports:
@@ -480,8 +428,6 @@ def main():
 
     print(f"Simulation terminee : {NB_OPERATIONS} jours simules.")
     print(f"  Membres : {len(donnees_membres)}")
-    print(f"  Garages : {len(donnees_garages)}")
-    print(f"  Serres  : {len(donnees_serres)}")
     print(f"  Expeditions terminees : {len(log_expeditions)}")
     print(f"  Sinistres : {len(log_sinistres)}")
     print(f"  Operations totales : {len(log_operations)}")

@@ -5,11 +5,11 @@ from MembreEquipage import MembreEquipage
 from Garage import Garage
 from Serre import Serre
 from Sinistre import Sinistre
-from Expedition import Expedition
 from EvenementSerre import EvenementSerre
 
 if TYPE_CHECKING:
     from Module import Module
+    from Expedition import Expedition
 
 RECYCLAGE = 10
 RECYCLAGE_MODULE = 5
@@ -181,7 +181,7 @@ class Base:
             return False
         if garage.getExpeditionEnCours():
             return False
-        Expedition(idExpedition, dateLancement, chercheur, participant, garage)
+        garage.lancerExpedition(idExpedition, dateLancement, chercheur, participant)
         return True
 
     def planterGraines(self, idSerre: int, idBio: int, nbGraine: int, idEvenementSerre: int) -> bool:
@@ -200,11 +200,9 @@ class Base:
         expedition = self.getExpedition(idExpedition)
         if not chercheur or not expedition:
             return False
-        if not expedition.getGarage().receptionnerExpedition(expedition, dateRetour, ptDeVieResultant):
+        if not expedition.getGarage().receptionnerExpedition(expedition, chercheur, dateRetour, ptDeVieResultant):
             return False
         self._nbPieceModuleStock += nbPieceModule
-        expedition.lierChercheurRetour(chercheur)
-        chercheur.lierExpeditionReceptionnee(expedition)
         return True
 
     def receptionnerCommande(self, idCmdt: int, nbGraine: int, nbNourriture: int,

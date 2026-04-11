@@ -1,10 +1,11 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 from Module import Module
+from Expedition import Expedition
 if TYPE_CHECKING:
     from Base import Base
     from Sinistre import Sinistre
-    from Expedition import Expedition
+    from MembreEquipage import MembreEquipage
 
 
 class Garage(Module):
@@ -30,12 +31,20 @@ class Garage(Module):
     def getNbExpeditions(self) -> int:
         return len(self._mesExpeditions)
 
-    def receptionnerExpedition(self, expedition: "Expedition", dateRetour: str, ptDeVieResultant: int) -> bool:
+    def receptionnerExpedition(self, expedition: "Expedition", chercheur: "MembreEquipage",
+                               dateRetour: str, ptDeVieResultant: int) -> bool:
         if expedition.getEtat() != 1:
             return False
         expedition.setEtat(0)
         expedition.setDateRetour(dateRetour)
         expedition.setPtDeVie(ptDeVieResultant)
+        expedition.lierChercheurRetour(chercheur)
+        chercheur.lierExpeditionReceptionnee(expedition)
+        return True
+
+    def lancerExpedition(self, idExpedition: int, dateLancement: str,
+                         chercheur: "MembreEquipage", participant: "MembreEquipage") -> bool:
+        Expedition(idExpedition, dateLancement, chercheur, participant, self)
         return True
 
     def lierExpedition(self, expedition: "Expedition") -> bool:

@@ -53,5 +53,6 @@ class Sinistre:
         return True
 
     def donnee(self) -> tuple:
+        tech_id = self._monTechnicien.getId() if self._monTechnicien else None
         return (self._idSinistre, self._dateCreation, self._monMembreAuteur.getId(),
-                self._ptDeVieResultant, self._etat)
+                self._ptDeVieResultant, self._etat, self._dateReparation, tech_id)
