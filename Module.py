@@ -6,9 +6,8 @@ if TYPE_CHECKING:
 
 
 class Module:
-    # attributs
     _idModule: int
-    _etat: int          # 1 = actif, 0 = supprimé/masqué
+    _etat: int
     _monSystem: "Base"
     _mesSinistres: list["Sinistre"]
 

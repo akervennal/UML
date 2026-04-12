@@ -6,9 +6,8 @@ if TYPE_CHECKING:
 
 
 class EvenementSerre:
-    # attributs
     _idEvenementSerre: int
-    _nbGraine: int      # positif = plantation, négatif = récolte
+    _nbGraine: int
     _monBiologiste: "MembreEquipage"
     _maSerre: "Serre"
 

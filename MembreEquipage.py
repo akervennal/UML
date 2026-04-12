@@ -7,7 +7,6 @@ if TYPE_CHECKING:
 
 
 class MembreEquipage:
-    # attributs
     _idMembre: int
     _roleMembre: str
     _etat: int
@@ -43,7 +42,6 @@ class MembreEquipage:
         return True
 
     def estEnExpedition(self) -> bool:
-        # Seul le participant est considere "en expedition", pas le lanceur
         for e in self._mesExpeditionsParticipees:
             if e.getEtat() == 1:
                 return True

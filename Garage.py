@@ -9,7 +9,6 @@ if TYPE_CHECKING:
 
 
 class Garage(Module):
-    # attributs
     _mesExpeditions: list["Expedition"]
 
     def __init__(self, idGarage: int, base: "Base"):

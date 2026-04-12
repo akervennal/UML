@@ -24,11 +24,9 @@ ROLE_CHERCHEUR  = "Chercheur"
 
 
 class Base:
-    # attributs
     _nbGraineStock: int
     _nbNourritureStock: int
     _nbPieceModuleStock: int
-
     _mesMembres: list["MembreEquipage"]
     _mesGarages: list["Garage"]
     _mesSerres: list["Serre"]
@@ -43,6 +41,8 @@ class Base:
         self._mesSerres = []
         self._mesSinistres = []
         self._mesMembres.append(MembreEquipage(idCmdt, ROLE_COMMANDANT))
+
+    # ----------------------------------------------------------------
 
     def trouverMembreParId(self, idMembre: int) -> "MembreEquipage | None":
         for m in self._mesMembres:
@@ -81,6 +81,8 @@ class Base:
                     and not m.estEnExpedition()):
                 return m
         return None
+
+    # ----------------------------------------------------------------
 
     def getGarage(self, idGarage: int) -> "Garage | None":
         for g in self._mesGarages:
@@ -126,6 +128,8 @@ class Base:
     def getSerres(self) -> list["Serre"]:
         return list(self._mesSerres)
 
+    # ----------------------------------------------------------------
+
     def ajouterMembre(self, idCmdt: int, idMembre: int, role: str) -> bool:
         if not self.getCmdt(idCmdt) or self.trouverMembreParId(idMembre) or role not in ROLES_VALIDES:
             return False
@@ -150,6 +154,8 @@ class Base:
         self._nbNourritureStock -= nbNourriture
         return True
 
+    # ----------------------------------------------------------------
+
     def declarerSinistreGarage(self, idMembreAuteur: int, idSinistre: int,
                                 idGarage: int, dateCreation: str, ptDeVieResultant: int) -> bool:
         membre = self.getMembre(idMembreAuteur)
@@ -168,63 +174,6 @@ class Base:
             return False
         nouveauSinistre = Sinistre(idSinistre, dateCreation, ptDeVieResultant, membre, serre)
         self._mesSinistres.append(nouveauSinistre)
-        return True
-
-    def lancerExpedition(self, idChercheurLancement: int, idParticipant: int,
-                         idExpedition: int, idGarage: int, dateLancement: str) -> bool:
-        chercheur = self.getChercheur(idChercheurLancement)
-        participant = self.getChercheur(idParticipant)
-        garage = self.getGarage(idGarage)
-        if not chercheur or not participant or not garage:
-            return False
-        if self.getExpedition(idExpedition) or idChercheurLancement == idParticipant:
-            return False
-        if garage.getExpeditionEnCours():
-            return False
-        garage.lancerExpedition(idExpedition, dateLancement, chercheur, participant)
-        return True
-
-    def planterGraines(self, idSerre: int, idBio: int, nbGraine: int, idEvenementSerre: int) -> bool:
-        bio = self.getBio(idBio)
-        serre = self.getSerre(idSerre)
-        if not bio or not serre or self._nbGraineStock < nbGraine or self.getEvenementSerre(idEvenementSerre):
-            return False
-        serre.setNbPlantSerre(serre.getNbPlantSerre() + nbGraine)
-        self._nbGraineStock -= nbGraine
-        serre.creerEvenementSerre(bio, idEvenementSerre, nbGraine)
-        return True
-
-    def receptionnerExpedition(self, idChercheurRetour: int, idExpedition: int,
-                                nbPieceModule: int, dateRetour: str, ptDeVieResultant: int) -> bool:
-        chercheur = self.getChercheur(idChercheurRetour)
-        expedition = self.getExpedition(idExpedition)
-        if not chercheur or not expedition:
-            return False
-        if not expedition.getGarage().receptionnerExpedition(expedition, chercheur, dateRetour, ptDeVieResultant):
-            return False
-        self._nbPieceModuleStock += nbPieceModule
-        return True
-
-    def receptionnerCommande(self, idCmdt: int, nbGraine: int, nbNourriture: int,
-                              nbPieceModule: int) -> bool:
-        if not self.getCmdt(idCmdt):
-            return False
-        self._nbGraineStock += nbGraine
-        self._nbNourritureStock += nbNourriture
-        self._nbPieceModuleStock += nbPieceModule
-        return True
-
-    def recolterPlantation(self, idBio: int, idSerre: int, idEvenementSerre: int) -> bool:
-        bio = self.getBio(idBio)
-        serre = self.getSerre(idSerre)
-        if not bio or not serre or self.getEvenementSerre(idEvenementSerre):
-            return False
-        nbPlantSerre = serre.getNbPlantSerre()
-        if nbPlantSerre == 0:
-            return False
-        self._nbNourritureStock += nbPlantSerre
-        serre.setNbPlantSerre(0)
-        serre.creerEvenementSerre(bio, idEvenementSerre, -nbPlantSerre)
         return True
 
     def reparerGarage(self, idTech: int, idGarage: int, dateReparation: str) -> bool:
@@ -263,6 +212,69 @@ class Base:
         tech.lierSinistre(sinistreEnCours)
         return True
 
+    # ----------------------------------------------------------------
+
+    def lancerExpedition(self, idChercheurLancement: int, idParticipant: int,
+                         idExpedition: int, idGarage: int, dateLancement: str) -> bool:
+        chercheur = self.getChercheur(idChercheurLancement)
+        participant = self.getChercheur(idParticipant)
+        garage = self.getGarage(idGarage)
+        if not chercheur or not participant or not garage:
+            return False
+        if self.getExpedition(idExpedition) or idChercheurLancement == idParticipant:
+            return False
+        if garage.getExpeditionEnCours():
+            return False
+        garage.lancerExpedition(idExpedition, dateLancement, chercheur, participant)
+        return True
+
+    def receptionnerExpedition(self, idChercheurRetour: int, idExpedition: int,
+                                nbPieceModule: int, dateRetour: str, ptDeVieResultant: int) -> bool:
+        chercheur = self.getChercheur(idChercheurRetour)
+        expedition = self.getExpedition(idExpedition)
+        if not chercheur or not expedition:
+            return False
+        if not expedition.getGarage().receptionnerExpedition(expedition, chercheur, dateRetour, ptDeVieResultant):
+            return False
+        self._nbPieceModuleStock += nbPieceModule
+        return True
+
+    # ----------------------------------------------------------------
+
+    def planterGraines(self, idSerre: int, idBio: int, nbGraine: int, idEvenementSerre: int) -> bool:
+        bio = self.getBio(idBio)
+        serre = self.getSerre(idSerre)
+        if not bio or not serre or self._nbGraineStock < nbGraine or self.getEvenementSerre(idEvenementSerre):
+            return False
+        serre.setNbPlantSerre(serre.getNbPlantSerre() + nbGraine)
+        self._nbGraineStock -= nbGraine
+        serre.creerEvenementSerre(bio, idEvenementSerre, nbGraine)
+        return True
+
+    def recolterPlantation(self, idBio: int, idSerre: int, idEvenementSerre: int) -> bool:
+        bio = self.getBio(idBio)
+        serre = self.getSerre(idSerre)
+        if not bio or not serre or self.getEvenementSerre(idEvenementSerre):
+            return False
+        nbPlantSerre = serre.getNbPlantSerre()
+        if nbPlantSerre == 0:
+            return False
+        self._nbNourritureStock += nbPlantSerre
+        serre.setNbPlantSerre(0)
+        serre.creerEvenementSerre(bio, idEvenementSerre, -nbPlantSerre)
+        return True
+
+    def receptionnerCommande(self, idCmdt: int, nbGraine: int, nbNourriture: int,
+                              nbPieceModule: int) -> bool:
+        if not self.getCmdt(idCmdt):
+            return False
+        self._nbGraineStock += nbGraine
+        self._nbNourritureStock += nbNourriture
+        self._nbPieceModuleStock += nbPieceModule
+        return True
+
+    # ----------------------------------------------------------------
+
     def supprimerMembre(self, idCmdt: int, idMembre: int) -> bool:
         if idCmdt == idMembre:
             return False
@@ -295,6 +307,8 @@ class Base:
         self._nbPieceModuleStock += RECYCLAGE_MODULE
         serre.setEtat(0)
         return True
+
+    # ----------------------------------------------------------------
 
     def donneeStocks(self) -> dict:
         return {

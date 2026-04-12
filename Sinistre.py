@@ -6,11 +6,10 @@ if TYPE_CHECKING:
 
 
 class Sinistre:
-    # attributs
     _idSinistre: int
     _dateCreation: str
     _ptDeVieResultant: int
-    _etat: int          # 1 = en cours, 0 = réparé
+    _etat: int
     _dateReparation: str
     _monMembreAuteur: "MembreEquipage"
     _monTechnicien: "MembreEquipage"

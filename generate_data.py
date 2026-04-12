@@ -1,7 +1,3 @@
-"""
-Generateur de donnees massives pour la base martienne.
-Simule ~1000 operations aleatoires et exporte les donnees collectees en pickle.
-"""
 import random
 import pickle
 import csv
@@ -9,7 +5,6 @@ import os
 from datetime import datetime, timedelta
 from Base import Base
 
-# --- Configuration ---
 NB_GARAGES = 20
 NB_SERRES = 20
 NB_OPERATIONS = 1000
@@ -22,30 +17,25 @@ ROLES_DISTRIBUTION = {
 }
 
 random.seed(42)
-
 ID_CMDT = 1
 
 
 def gen_date(jour):
-    """Genere une date string a partir du jour de simulation."""
     d = datetime(2040, 1, 1) + timedelta(days=jour)
     return d.strftime("%Y-%m-%d")
 
 
 def rand_gauss_clamp(mu, sigma, lo, hi):
-    """Genere un entier selon une loi normale tronquee."""
     val = random.gauss(mu, sigma)
     return int(max(lo, min(hi, round(val))))
 
 
 def rand_expo_clamp(lam, lo, hi):
-    """Genere un entier selon une loi exponentielle tronquee."""
     val = random.expovariate(1 / lam)
     return int(max(lo, min(hi, round(val))))
 
 
 def next_id(ids, key):
-    """Renvoie le prochain ID pour la categorie donnee et l'incremente."""
     val = ids[key]
     ids[key] += 1
     return val
@@ -53,10 +43,8 @@ def next_id(ids, key):
 
 def main():
     ids = {"membre": 2, "module": 1, "sinistre": 1, "expedition": 1, "evenement": 1}
-
     base = Base(ID_CMDT)
 
-    # --- Listes pour collecter les donnees ---
     historique_stocks = []
     log_operations = []
     log_expeditions = []
@@ -66,7 +54,6 @@ def main():
     log_membres = []
     log_ravitaillements = []
 
-    # Listes de suivi interne
     techniciens = []
     biologistes = []
     chercheurs = []
@@ -75,9 +62,8 @@ def main():
     expeditions_en_cours = []
     degats_par_module = {}
 
-    # ================================================================
-    # PHASE 1 : Initialisation (commande + membres + modules)
-    # ================================================================
+    # ----------------------------------------------------------------
+
     base.receptionnerCommande(ID_CMDT, 800, 2000, 500)
     log_operations.append((0, "commande", True, "graines=800, nourriture=2000, pieces=500"))
     log_ravitaillements.append((0, 800, 2000, 500))
@@ -112,14 +98,11 @@ def main():
     stocks = base.donneeStocks()
     historique_stocks.append((0, stocks["graines"], stocks["nourriture"], stocks["piecesModule"]))
 
-    # ================================================================
-    # PHASE 2 : Simulation des operations
-    # ================================================================
+    # ----------------------------------------------------------------
+
     for jour in range(1, NB_OPERATIONS + 1):
         date = gen_date(jour)
 
-        # --- Ravitaillement periodique (tous les 20 jours) ---
-        # Graines et pieces systematiques ; nourriture d'urgence (10% de chance)
         if jour % 20 == 0:
             g = random.randint(1800, 2500)
             n = random.randint(100, 300) if random.random() < 0.10 else 0
@@ -129,14 +112,12 @@ def main():
                 log_ravitaillements.append((jour, g, n, p))
             log_operations.append((jour, "commande", ok, f"graines={g}, nourriture={n}, pieces={p}"))
 
-        # --- Consommation quotidienne ---
         all_ids = [ID_CMDT] + techniciens + biologistes + chercheurs
         for mid in all_ids:
             ok = base.consommerNourriture(mid, 1)
             if ok:
                 log_consommation.append((jour, mid, 1))
 
-        # --- Suppression de membre (probabilite 3%) ---
         if random.random() < 0.03:
             all_non_cmdt = techniciens + biologistes + chercheurs
             if all_non_cmdt:
@@ -157,7 +138,6 @@ def main():
                 else:
                     log_operations.append((jour, "suppression_membre", False, f"membre={mid}"))
 
-        # --- Ajout de membre (probabilite 5%) ---
         if random.random() < 0.05:
             role_ajout = random.choice(["Technicien", "Biologiste", "Chercheur"])
             mid = next_id(ids, "membre")
@@ -174,7 +154,6 @@ def main():
             else:
                 log_operations.append((jour, "ajout_membre", False, f"membre={mid}, role={role_ajout}"))
 
-        # --- Ajout de module : mode maintenance si sous le seuil initial ---
         if techniciens:
             tech = random.choice(techniciens)
             for type_module, ids_list, seuil in [
@@ -191,7 +170,6 @@ def main():
                     else:
                         log_operations.append((jour, "ajout_module", False, f"module={mid}, type={type_module}"))
 
-        # --- Plantation (probabilite 60%, plusieurs serres par event) ---
         if random.random() < 0.6 and biologistes and serres_ids:
             bio = random.choice(biologistes)
             nb_serres_plant = random.randint(4, 8)
@@ -205,7 +183,6 @@ def main():
                 else:
                     log_operations.append((jour, "plantation", False, f"serre={serre}, graines={nb_graines}"))
 
-        # --- Recolte (probabilite 40%, plusieurs serres par event) ---
         if random.random() < 0.4 and biologistes and serres_ids:
             bio = random.choice(biologistes)
             nb_serres_rec = random.randint(4, 8)
@@ -224,7 +201,6 @@ def main():
                 else:
                     log_operations.append((jour, "recolte", False, f"serre={serre}"))
 
-        # --- Lancer expedition (probabilite 25%) ---
         if random.random() < 0.25 and len(chercheurs) >= 2 and garages_ids:
             garage = random.choice(garages_ids)
             pair = random.sample(chercheurs, 2)
@@ -237,7 +213,6 @@ def main():
             else:
                 log_operations.append((jour, "expedition_lancement", False, f"exp={eid}, garage={garage}"))
 
-        # --- Receptionner expeditions terminees ---
         nouvelles_en_cours = []
         for exp_info in expeditions_en_cours:
             eid, garage_id, jour_lance, participant_id, launcher_id, duree = exp_info
@@ -263,7 +238,6 @@ def main():
                 nouvelles_en_cours.append(exp_info)
         expeditions_en_cours = nouvelles_en_cours
 
-        # --- Sinistre garage (probabilite 10%) ---
         if random.random() < 0.10 and garages_ids:
             garage = random.choice(garages_ids)
             all_ids_sin = [ID_CMDT] + techniciens + biologistes + chercheurs
@@ -284,7 +258,6 @@ def main():
             else:
                 log_operations.append((jour, "sinistre_garage", False, f"garage={garage}, pv={ptVie}"))
 
-        # --- Sinistre serre (probabilite 8%) ---
         if random.random() < 0.08 and serres_ids:
             serre = random.choice(serres_ids)
             all_ids_sin = [ID_CMDT] + techniciens + biologistes + chercheurs
@@ -305,7 +278,6 @@ def main():
             else:
                 log_operations.append((jour, "sinistre_serre", False, f"serre={serre}, pv={ptVie}"))
 
-        # --- Reparation (probabilite 40% si sinistres en cours) ---
         sinistres_non_repares = [s for s in log_sinistres if s["dateReparation"] is None]
         if random.random() < 0.40 and sinistres_non_repares and techniciens:
             sin = random.choice(sinistres_non_repares)
@@ -323,7 +295,6 @@ def main():
             else:
                 log_operations.append((jour, "reparation", False, f"sinistre={sin['id']}, tech={tech}"))
 
-        # --- Suppression de modules (Bernoulli conditionnelle aux degats cumules) ---
         if techniciens:
             tech = random.choice(techniciens)
             for gid in garages_ids[:]:
@@ -345,13 +316,11 @@ def main():
                     else:
                         log_operations.append((jour, "suppression_serre", False, f"serre={s_id}"))
 
-        # --- Snapshot des stocks ---
         stocks = base.donneeStocks()
         historique_stocks.append((jour, stocks["graines"], stocks["nourriture"], stocks["piecesModule"]))
 
-    # ================================================================
-    # PHASE 3 : Collecte des donnees finales via getters publics
-    # ================================================================
+    # ----------------------------------------------------------------
+
     donnees_membres = []
     for m in base.getMembres():
         is_cmdt = (m.getId() == ID_CMDT)
@@ -369,9 +338,8 @@ def main():
             "nb_membres_supprimes": sum(1 for l in log_membres if l[1] == "suppression") if is_cmdt else 0,
         })
 
-    # ================================================================
-    # Export pickle (pour analyse_stats.py)
-    # ================================================================
+    # ----------------------------------------------------------------
+
     data = {
         "historique_stocks": historique_stocks,
         "log_operations": log_operations,
@@ -387,9 +355,6 @@ def main():
     with open("simulation_data.pkl", "wb") as f:
         pickle.dump(data, f)
 
-    # ================================================================
-    # Export CSV (factorise)
-    # ================================================================
     csv_dir = "csv_data"
     os.makedirs(csv_dir, exist_ok=True)
 

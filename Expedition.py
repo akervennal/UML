@@ -6,12 +6,11 @@ if TYPE_CHECKING:
 
 
 class Expedition:
-    # attributs
     _idExpedition: int
     _dateLancement: str
     _dateRetour: str
     _ptDeVieResultant: int
-    _etat: int          # 1 = en cours, 0 = terminée
+    _etat: int
     _monChercheurLancement: "MembreEquipage"
     _monChercheurRetour: "MembreEquipage"
     _monParticipant: "MembreEquipage"

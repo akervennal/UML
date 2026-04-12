@@ -9,7 +9,6 @@ if TYPE_CHECKING:
 
 
 class Serre(Module):
-    # attributs
     _nbPlantSerre: int
     _mesEvenements: list["EvenementSerre"]
 
